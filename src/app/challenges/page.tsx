@@ -6,7 +6,7 @@ import { allChallenges, challengeCategories, challengeDifficulties } from '@/lib
 import ChallengeCard from '@/components/ChallengeCard'
 import UserProfile from '@/components/UserProfile'
 import ProtectedRoute from '@/components/ProtectedRoute'
-import { CodeIcon, FilterIcon, XIcon, HomeIcon, TrophyIcon } from 'lucide-react'
+import { CodeIcon, FilterIcon, XIcon, HomeIcon } from 'lucide-react'
 import Image from 'next/image'
 
 const categories = ['all', ...challengeCategories] as const
@@ -53,10 +53,6 @@ export default function ChallengesPage() {
                 <Link href="/challenges" className="flex items-center gap-1 text-orange-500 font-medium">
                   <CodeIcon className="w-4 h-4" />
                   Challenges
-                </Link>
-                <Link href="/leaderboard" className="flex items-center gap-1 text-gray-600 hover:text-gray-900 transition-colors">
-                  <TrophyIcon className="w-4 h-4" />
-                  Leaderboard
                 </Link>
               </nav>
               <UserProfile />
