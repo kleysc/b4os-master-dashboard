@@ -114,4 +114,4 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
-Built with ❤️ for the Bitcoin community
+Built with ❤️ for the Bitcoin community# Force deploy
