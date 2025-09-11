@@ -9,6 +9,11 @@ export interface ChallengeMetadata {
   prerequisites?: string[]
   chapterNumber?: number
   order?: number
+  // GitHub integration
+  github?: {
+    templateRepository: string // e.g., "B4OS-Dev/bitcoin-hash-challenge"
+    assignmentSlug: string // e.g., "wkJqDNHy"
+  }
 }
 
 export interface Challenge {
