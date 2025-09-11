@@ -17,7 +17,10 @@ export const metadata: Metadata = {
   title: "B4OS Challenges - Master Bitcoin Development",
   description: "Learn Bitcoin and Lightning Network development through interactive coding challenges",
   icons: {
-    icon: "/web-app-manifest-192x192.png",
+    icon: [
+      { url: "/web-app-manifest-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/web-app-manifest-512x512.png", sizes: "512x512", type: "image/png" },
+    ],
     shortcut: "/web-app-manifest-192x192.png",
     apple: "/web-app-manifest-512x512.png",
   },
