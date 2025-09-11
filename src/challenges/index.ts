@@ -1,7 +1,7 @@
 import { Challenge } from '@/types/challenge'
 
 // Import all challenges
-import { bitcoinHash256Challenge } from './bitcoin-basics/bitcoin-hash-256'
+import { programmingPuzzlePartyIntro } from './bitcoin-basics/puzzle-party-intro'
 import { lightningInvoiceChallenge } from './lightning-network/lightning-invoice'
 
 // Import configuration
@@ -9,7 +9,7 @@ export { challengeCategories, challengeDifficulties, categoryInfo, difficultyInf
 
 // Challenge registry
 export const challengeRegistry: Record<string, Challenge> = {
-  'bitcoin-hash-256': bitcoinHash256Challenge,
+  'puzzle-party-intro': programmingPuzzlePartyIntro,
   'lightning-invoice': lightningInvoiceChallenge,
 }
 
