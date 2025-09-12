@@ -52,7 +52,6 @@ export default function GitHubIntegration({
   const [githubData, setGithubData] = useState<GitHubData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [validatingRepository, setValidatingRepository] = useState(false)
   
   // Cache duration: 5 minutes
   const CACHE_DURATION = 5 * 60 * 1000
@@ -95,52 +94,10 @@ Bienvenido al proceso de desarrollo y evaluación para ejercicios. Queremos aseg
 Recuerda, estamos aquí para apoyarte en cada paso del camino. ¡Feliz codificación!`
   }
 
-  // Function to validate if repository URL exists
-  const validateRepositoryUrl = async (url: string): Promise<boolean> => {
-    try {
-      // Use GitHub API to check if repository exists
-      const repoPath = url.replace('https://github.com/', '')
-      const apiUrl = `https://api.github.com/repos/${repoPath}`
-      
-      const response = await fetch(apiUrl, {
-        headers: {
-          'Authorization': `token ${(session as any)?.accessToken}`,
-          'Accept': 'application/vnd.github.v3+json',
-        },
-      })
-      
-      return response.status === 200
-    } catch (error) {
-      console.error('Error validating repository URL:', error)
-      return false
-    }
-  }
-
-  // Function to handle repository access with validation
-  const handleRepositoryAccess = async (repositoryUrl: string) => {
-    setValidatingRepository(true)
-    
-    try {
-      const exists = await validateRepositoryUrl(repositoryUrl)
-      
-      if (exists) {
-        // Repository exists, redirect to it
-        window.open(repositoryUrl, '_blank', 'noopener,noreferrer')
-      } else {
-        // Repository doesn't exist, redirect to classroom invite
-        const classroomUrl = githubData?.classroom?.inviteLink || 
-          `https://classroom.github.com/a/${assignmentSlug}`
-        window.open(classroomUrl, '_blank', 'noopener,noreferrer')
-      }
-    } catch (error) {
-      console.error('Error handling repository access:', error)
-      // Fallback to classroom invite on error
-      const classroomUrl = githubData?.classroom?.inviteLink || 
-        `https://classroom.github.com/a/${assignmentSlug}`
-      window.open(classroomUrl, '_blank', 'noopener,noreferrer')
-    } finally {
-      setValidatingRepository(false)
-    }
+  // Simple function to handle repository access - always try direct repo first
+  const handleRepositoryAccess = (repositoryUrl: string) => {
+    // Always try to go directly to the repository
+    window.open(repositoryUrl, '_blank', 'noopener,noreferrer')
   }
 
   useEffect(() => {
@@ -282,43 +239,32 @@ Recuerda, estamos aquí para apoyarte en cada paso del camino. ¡Feliz codificac
             </div>
           </div>
           
-          {githubData.studentRepository?.exists ? (
-            /* Student already has repository - validate before redirect */
-            <button
-              onClick={() => handleRepositoryAccess(githubData.studentRepository!.url)}
-              disabled={validatingRepository}
-              className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed"
-            >
-              {validatingRepository ? (
-                <LoaderIcon className="w-5 h-5 animate-spin" />
-              ) : (
-                <ExternalLinkIcon className="w-5 h-5" />
-              )}
-              {validatingRepository ? 'Validating...' : 'Go to Your Repository'}
-            </button>
-          ) : (
-            /* Student needs to access their repository - validate before redirect */
-            <button
-              onClick={() => handleRepositoryAccess(
-                githubData.studentRepository?.url || 
-                `https://github.com/B4OS-Dev/ejercicios-de-prueba-${(session?.user as any)?.username}`
-              )}
-              disabled={validatingRepository}
-              className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:bg-green-400 disabled:cursor-not-allowed"
-            >
-              {validatingRepository ? (
-                <LoaderIcon className="w-5 h-5 animate-spin" />
-              ) : (
-                <ExternalLinkIcon className="w-5 h-5" />
-              )}
-              {validatingRepository ? 'Validating...' : 'Go to Your Repository'}
-            </button>
-          )}
+          <button
+            onClick={() => handleRepositoryAccess(
+              githubData.studentRepository?.url || 
+              `https://github.com/B4OS-Dev/ejercicios-de-prueba-${(session?.user as any)?.username}`
+            )}
+            className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+          >
+            <ExternalLinkIcon className="w-5 h-5" />
+            Go to Your Repository
+          </button>
           
-          <div className="mt-4 text-sm text-green-600">
+          <div className="mt-4 text-sm text-green-600 space-y-2">
             <p><strong>Template Repository:</strong> {templateRepository}</p>
-            <p><strong>Your Repository:</strong> https://github.com/B4OS-Dev/ejercicios-de-prueba-{(session?.user as any)?.username}</p>
-            <p><strong>Instructions:</strong> Click the button above to access your assigned repository</p>
+            <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-blue-800 text-sm">
+                <strong>📋 Instructiones:</strong> Si al acceder al repositorio obtienes un error 404 o no puedes acceder al repositorio, debes aceptar la asignación primero{' '}
+                <a
+                  href={githubData?.classroom?.inviteLink || `https://classroom.github.com/a/${assignmentSlug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold underline hover:text-blue-900"
+                >
+                  aceptar la asignación primero
+                </a>.
+              </p>
+            </div>
           </div>
         </div>
       )}
