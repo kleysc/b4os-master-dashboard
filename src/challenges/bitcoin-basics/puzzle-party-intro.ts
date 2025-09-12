@@ -2,7 +2,7 @@ import { Challenge } from '@/types/challenge'
 
 export const programmingPuzzlePartyIntro: Challenge = {
   metadata: {
-    id: 'bitcoin-hash-256',
+    id: 'puzzle-party-intro',
     title: 'Programming Puzzle Party - Introducción',
     description: 'Bienvenida al Programming Puzzle Party: Tu aventura con Bitcoin y Lightning Network comienza aquí',
     difficulty: 'beginner',
