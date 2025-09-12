@@ -52,6 +52,7 @@ export default function GitHubIntegration({
   const [githubData, setGithubData] = useState<GitHubData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [validatingRepository, setValidatingRepository] = useState(false)
   
   // Cache duration: 5 minutes
   const CACHE_DURATION = 5 * 60 * 1000
@@ -94,10 +95,45 @@ Bienvenido al proceso de desarrollo y evaluación para ejercicios. Queremos aseg
 Recuerda, estamos aquí para apoyarte en cada paso del camino. ¡Feliz codificación!`
   }
 
-  // Simple function to handle repository access - always try direct repo first
+  // Smart routing using backend data - enhanced with server token validation
   const handleRepositoryAccess = (repositoryUrl: string) => {
-    // Always try to go directly to the repository
-    window.open(repositoryUrl, '_blank', 'noopener,noreferrer')
+    setValidatingRepository(true)
+    
+    // Short timeout to show validation state for better UX
+    setTimeout(() => {
+      try {
+        // Use backend data to determine routing
+        const hasRepository = githubData?.studentRepository?.exists
+        const hasAccess = githubData?.studentRepository?.hasAccess
+        
+        console.log('Backend data check:', { 
+          hasRepository, 
+          hasAccess, 
+          repositoryUrl,
+          fullGithubData: githubData?.studentRepository
+        })
+        
+        if (hasRepository && hasAccess) {
+          // Repository exists and user has access - go directly
+          console.log('Backend confirms repository access, redirecting to repo:', repositoryUrl)
+          window.open(repositoryUrl, '_blank', 'noopener,noreferrer')
+        } else {
+          // Repository doesn't exist or no access - go to classroom
+          console.log('Backend indicates no repository access, redirecting to classroom')
+          const classroomUrl = githubData?.classroom?.inviteLink || 
+            `https://classroom.github.com/a/${assignmentSlug}`
+          window.open(classroomUrl, '_blank', 'noopener,noreferrer')
+        }
+      } catch (error) {
+        // Fallback to classroom on any error
+        console.error('🔥 Error during repository routing:', error)
+        const classroomUrl = githubData?.classroom?.inviteLink || 
+          `https://classroom.github.com/a/${assignmentSlug}`
+        window.open(classroomUrl, '_blank', 'noopener,noreferrer')
+      } finally {
+        setValidatingRepository(false)
+      }
+    }, 300) // Short delay for UX
   }
 
   useEffect(() => {
@@ -244,27 +280,19 @@ Recuerda, estamos aquí para apoyarte en cada paso del camino. ¡Feliz codificac
               githubData.studentRepository?.url || 
               `https://github.com/B4OS-Dev/ejercicios-de-prueba-${(session?.user as any)?.username}`
             )}
-            className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+            disabled={validatingRepository}
+            className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed"
           >
-            <ExternalLinkIcon className="w-5 h-5" />
-            Go to Your Repository
+            {validatingRepository ? (
+              <LoaderIcon className="w-5 h-5 animate-spin" />
+            ) : (
+              <ExternalLinkIcon className="w-5 h-5" />
+            )}
+            {validatingRepository ? 'Verificando acceso...' : 'Go to Your Repository'}
           </button>
           
-          <div className="mt-4 text-sm text-green-600 space-y-2">
+          <div className="mt-4 text-sm text-green-600">
             <p><strong>Template Repository:</strong> {templateRepository}</p>
-            <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-blue-800 text-sm">
-                <strong>📋 Instructiones:</strong> Si al acceder al repositorio obtienes un error 404 o no puedes acceder al repositorio, debes aceptar la asignación primero{' '}
-                <a
-                  href={githubData?.classroom?.inviteLink || `https://classroom.github.com/a/${assignmentSlug}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-semibold underline hover:text-blue-900"
-                >
-                  aceptar la asignación primero
-                </a>.
-              </p>
-            </div>
           </div>
         </div>
       )}

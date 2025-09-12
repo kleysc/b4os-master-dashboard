@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
-import { createGitHubAPI } from '@/lib/github-api'
+import { createGitHubAPI, createServerGitHubAPI } from '@/lib/github-api'
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,16 +26,19 @@ export async function GET(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Create authenticated GitHub API service
+    // Create authenticated GitHub API service for general requests
     const githubAPI = createGitHubAPI(session.accessToken as string)
+    
+    // Create server GitHub API service with enhanced permissions for repository checking
+    const serverGithubAPI = createServerGitHubAPI()
     
     // Get user's GitHub username
     const githubUsername = (session.user as any)?.username
     
-    // Check if student already has their own repository
+    // Check if student already has their own repository using server token
     const studentRepo = githubUsername 
-      ? await githubAPI.checkStudentRepository(assignmentBaseName, githubUsername)
-      : { exists: false, url: '', hasAccess: false }
+      ? await serverGithubAPI.checkStudentRepository(assignmentBaseName, githubUsername)
+      : { exists: false, url: '', hasAccess: false, statusCode: 0 }
     
     // Fetch README content from template repository (or student repo if exists)
     const readmeSource = studentRepo.exists ? studentRepo.url : templateRepo

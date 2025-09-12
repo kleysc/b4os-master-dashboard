@@ -151,7 +151,7 @@ class GitHubAPIService {
     try {
       const { owner, name } = this.parseRepository(studentRepoUrl)
       
-      console.log('📡 Making API call to:', `${this.baseUrl}/repos/${owner}/${name}`)
+      console.log('Making API call to:', `${this.baseUrl}/repos/${owner}/${name}`)
       
       const response = await fetch(`${this.baseUrl}/repos/${owner}/${name}`, {
         headers: this.getHeaders()
@@ -159,7 +159,7 @@ class GitHubAPIService {
 
       const statusCode = response.status
       
-      console.log('📊 GitHub API Response:', {
+      console.log('GitHub API Response:', {
         statusCode,
         statusText: response.statusText,
         url: studentRepoUrl
@@ -170,7 +170,7 @@ class GitHubAPIService {
       // User has access if we get 200 or 403 (exists but no access)
       const hasAccess = statusCode === 200 || statusCode === 403
       
-      console.log('✅ Repository check result:', {
+      console.log('Repository check result:', {
         exists,
         hasAccess,
         statusCode,
@@ -184,7 +184,7 @@ class GitHubAPIService {
         statusCode
       }
     } catch (error) {
-      console.error('❌ Error checking student repository:', error)
+      console.error('Error checking student repository:', error)
       return {
         exists: false,
         url: studentRepoUrl,
@@ -201,5 +201,16 @@ export const githubAPI = new GitHubAPIService()
 // Export factory for authenticated requests
 export const createGitHubAPI = (accessToken: string) => 
   new GitHubAPIService(accessToken)
+
+// Export factory for server requests with enhanced permissions
+export const createServerGitHubAPI = () => {
+  const serverToken = process.env.GITHUB_SERVER_TOKEN
+  if (!serverToken) {
+    console.warn('GITHUB_SERVER_TOKEN not found, using limited permissions')
+    return new GitHubAPIService()
+  }
+  console.log('Using GITHUB_SERVER_TOKEN for enhanced repository access')
+  return new GitHubAPIService(serverToken)
+}
 
 export type { GitHubRepository, GitHubContent }
