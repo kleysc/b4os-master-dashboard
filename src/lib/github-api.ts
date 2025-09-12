@@ -16,6 +16,60 @@ interface GitHubContent {
   lastModified?: string
 }
 
+interface GitHubWorkflowRun {
+  id: number
+  name: string
+  head_branch: string
+  head_sha: string
+  status: 'queued' | 'in_progress' | 'completed'
+  conclusion: 'success' | 'failure' | 'neutral' | 'cancelled' | 'skipped' | 'timed_out' | 'action_required' | null
+  created_at: string
+  updated_at: string
+  html_url: string
+}
+
+interface GitHubWorkflowRunsResponse {
+  total_count: number
+  workflow_runs: GitHubWorkflowRun[]
+}
+
+interface GitHubWorkflowJob {
+  id: number
+  name: string
+  status: 'queued' | 'in_progress' | 'completed'
+  conclusion: 'success' | 'failure' | 'neutral' | 'cancelled' | 'skipped' | 'timed_out' | 'action_required' | null
+  started_at: string
+  completed_at: string | null
+  html_url: string
+}
+
+interface GitHubWorkflowJobsResponse {
+  total_count: number
+  jobs: GitHubWorkflowJob[]
+}
+
+interface TestFailure {
+  jobName: string
+  jobId: number
+  logs: string
+  htmlUrl: string
+}
+
+interface AutogradingResult {
+  hasWorkflows: boolean
+  lastRun?: {
+    id: number
+    status: string
+    conclusion: string | null
+    created_at: string
+    html_url: string
+    passed: boolean
+    score?: number
+    failures?: TestFailure[]
+  }
+  totalRuns: number
+}
+
 class GitHubAPIService {
   private baseUrl = 'https://api.github.com'
   
@@ -193,6 +247,152 @@ class GitHubAPIService {
       }
     }
   }
+
+  // Fetch autograding results from GitHub Actions
+  async fetchAutogradingResults(repoUrl: string): Promise<AutogradingResult> {
+    try {
+      const { owner, name } = this.parseRepository(repoUrl)
+      
+      console.log('Fetching workflow runs for:', { owner, name })
+      
+      const response = await fetch(`${this.baseUrl}/repos/${owner}/${name}/actions/runs?per_page=10`, {
+        headers: this.getHeaders()
+      })
+
+      if (!response.ok) {
+        console.error(`GitHub Actions API error: ${response.status} ${response.statusText}`)
+        return {
+          hasWorkflows: false,
+          totalRuns: 0
+        }
+      }
+
+      const data: GitHubWorkflowRunsResponse = await response.json()
+      
+      console.log('Workflow runs response:', {
+        total_count: data.total_count,
+        runs: data.workflow_runs.length
+      })
+
+      if (data.total_count === 0) {
+        return {
+          hasWorkflows: false,
+          totalRuns: 0
+        }
+      }
+
+      // Get the most recent completed workflow run (only success or failure)
+      const lastRun = data.workflow_runs
+        .filter(run => 
+          run.status === 'completed' && 
+          (run.conclusion === 'success' || run.conclusion === 'failure')
+        )
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
+
+      if (!lastRun) {
+        // Check if there are any runs at all
+        const hasAnyRuns = data.workflow_runs.length > 0
+        return {
+          hasWorkflows: true,
+          totalRuns: data.total_count,
+          lastRun: hasAnyRuns ? undefined : undefined // No meaningful runs yet
+        }
+      }
+
+      const passed = lastRun.conclusion === 'success'
+      
+      console.log('Latest workflow run:', {
+        id: lastRun.id,
+        status: lastRun.status,
+        conclusion: lastRun.conclusion,
+        passed
+      })
+
+      // Fetch failure logs if the run failed
+      let failures: TestFailure[] = []
+      if (!passed && lastRun.conclusion === 'failure') {
+        console.log('Fetching failure logs for run:', lastRun.id)
+        failures = await this.fetchWorkflowJobLogs(repoUrl, lastRun.id)
+      }
+
+      return {
+        hasWorkflows: true,
+        lastRun: {
+          id: lastRun.id,
+          status: lastRun.status,
+          conclusion: lastRun.conclusion,
+          created_at: lastRun.created_at,
+          html_url: lastRun.html_url,
+          passed,
+          score: passed ? 100 : 0, // Basic scoring - can be enhanced later
+          failures: failures.length > 0 ? failures : undefined
+        },
+        totalRuns: data.total_count
+      }
+    } catch (error) {
+      console.error('Error fetching autograding results:', error)
+      return {
+        hasWorkflows: false,
+        totalRuns: 0
+      }
+    }
+  }
+
+  // Fetch logs for failed workflow jobs
+  async fetchWorkflowJobLogs(repoUrl: string, runId: number): Promise<TestFailure[]> {
+    try {
+      const { owner, name } = this.parseRepository(repoUrl)
+      
+      // Get jobs for this workflow run
+      const jobsResponse = await fetch(`${this.baseUrl}/repos/${owner}/${name}/actions/runs/${runId}/jobs`, {
+        headers: this.getHeaders()
+      })
+
+      if (!jobsResponse.ok) {
+        console.error(`GitHub Jobs API error: ${jobsResponse.status} ${jobsResponse.statusText}`)
+        return []
+      }
+
+      const jobsData: GitHubWorkflowJobsResponse = await jobsResponse.json()
+      
+      // Get failed jobs
+      const failedJobs = jobsData.jobs.filter(job => 
+        job.status === 'completed' && job.conclusion === 'failure'
+      )
+
+      if (failedJobs.length === 0) {
+        return []
+      }
+
+      const failures: TestFailure[] = []
+
+      // Fetch logs for each failed job
+      for (const job of failedJobs) {
+        try {
+          const logsResponse = await fetch(`${this.baseUrl}/repos/${owner}/${name}/actions/jobs/${job.id}/logs`, {
+            headers: this.getHeaders()
+          })
+
+          if (logsResponse.ok) {
+            const logs = await logsResponse.text()
+            failures.push({
+              jobName: job.name,
+              jobId: job.id,
+              logs: logs,
+              htmlUrl: job.html_url
+            })
+          }
+        } catch (logError) {
+          console.error(`Error fetching logs for job ${job.id}:`, logError)
+        }
+      }
+
+      return failures
+    } catch (error) {
+      console.error('Error fetching workflow job logs:', error)
+      return []
+    }
+  }
 }
 
 // Export singleton with no token (for public repos)
@@ -213,4 +413,4 @@ export const createServerGitHubAPI = () => {
   return new GitHubAPIService(serverToken)
 }
 
-export type { GitHubRepository, GitHubContent }
+export type { GitHubRepository, GitHubContent, GitHubWorkflowRun, AutogradingResult, TestFailure }

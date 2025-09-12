@@ -50,6 +50,12 @@ export async function GET(request: NextRequest) {
     // Get repository info
     const repoInfo = await githubAPI.fetchRepositoryInfo(templateRepo)
     
+    // Fetch autograding results if student repository exists
+    let autogradingResults = null
+    if (studentRepo.exists && studentRepo.hasAccess) {
+      autogradingResults = await serverGithubAPI.fetchAutogradingResults(studentRepo.url)
+    }
+    
     return NextResponse.json({
       success: true,
       user: {
@@ -67,7 +73,8 @@ export async function GET(request: NextRequest) {
         assignmentSlug,
         inviteLink
       },
-      studentRepository: studentRepo
+      studentRepository: studentRepo,
+      autograding: autogradingResults
     })
   } catch (error) {
     console.error('GitHub challenge API error:', error)

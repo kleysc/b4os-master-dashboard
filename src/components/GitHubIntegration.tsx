@@ -4,7 +4,29 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { ExternalLinkIcon, GitBranchIcon, BookOpenIcon, LoaderIcon } from 'lucide-react'
+import { ExternalLinkIcon, GitBranchIcon, BookOpenIcon, LoaderIcon, CheckCircleIcon, XCircleIcon, ClockIcon, PlayCircleIcon, ChevronDownIcon, ChevronUpIcon, AlertTriangleIcon } from 'lucide-react'
+
+interface TestFailure {
+  jobName: string
+  jobId: number
+  logs: string
+  htmlUrl: string
+}
+
+interface AutogradingResult {
+  hasWorkflows: boolean
+  lastRun?: {
+    id: number
+    status: string
+    conclusion: string | null
+    created_at: string
+    html_url: string
+    passed: boolean
+    score?: number
+    failures?: TestFailure[]
+  }
+  totalRuns: number
+}
 
 interface GitHubData {
   success: boolean
@@ -32,6 +54,7 @@ interface GitHubData {
     url: string
     hasAccess: boolean
   }
+  autograding?: AutogradingResult | null
   error?: string
 }
 
@@ -53,11 +76,63 @@ export default function GitHubIntegration({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [validatingRepository, setValidatingRepository] = useState(false)
+  const [expandedLogs, setExpandedLogs] = useState<Record<number, boolean>>({})
   
   // Cache duration: 5 minutes
   const CACHE_DURATION = 5 * 60 * 1000
   const CACHE_KEY = `github-data-${templateRepository}-${assignmentSlug}`
   const CACHE_TIMESTAMP_KEY = `github-timestamp-${templateRepository}-${assignmentSlug}`
+
+  // Toggle log expansion
+  const toggleLogExpansion = (jobId: number) => {
+    setExpandedLogs(prev => ({
+      ...prev,
+      [jobId]: !prev[jobId]
+    }))
+  }
+
+  // Clean and format logs for display
+  const formatLogs = (logs: string): string => {
+    return logs
+      .split('\n')
+      .filter(line => {
+        // Filter out timestamp prefixes and irrelevant lines
+        const cleanLine = line.replace(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\s/, '')
+        return cleanLine.trim() && 
+               !cleanLine.startsWith('##[') && 
+               !cleanLine.includes('runner.os') &&
+               !cleanLine.includes('shell: /usr/bin/bash')
+      })
+      .map(line => line.replace(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z\s/, ''))
+      .join('\n')
+      .trim()
+  }
+
+  // Extract relevant error information from logs
+  const extractErrorSummary = (logs: string): string => {
+    const lines = logs.split('\n')
+    const errorLines = []
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i]
+      if (line.includes('FAILED') || 
+          line.includes('Error') || 
+          line.includes('Expected') ||
+          line.includes('AssertionError') ||
+          line.toLowerCase().includes('test') && line.toLowerCase().includes('fail')) {
+        errorLines.push(line.trim())
+        // Include next few lines for context
+        for (let j = i + 1; j < Math.min(i + 3, lines.length); j++) {
+          if (lines[j].trim() && !lines[j].includes('##[')) {
+            errorLines.push(lines[j].trim())
+          }
+        }
+        break
+      }
+    }
+    
+    return errorLines.length > 0 ? errorLines.join('\n') : 'No specific error details found'
+  }
 
   // Return the original repository README content exactly as it is
   const getOriginalReadme = () => {
@@ -294,6 +369,148 @@ Recuerda, estamos aquí para apoyarte en cada paso del camino. ¡Feliz codificac
           <div className="mt-4 text-sm text-green-600">
             <p><strong>Template Repository:</strong> {templateRepository}</p>
           </div>
+        </div>
+      )}
+
+      {/* Autograding Results */}
+      {githubData?.studentRepository?.exists && githubData?.autograding && (
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900">
+            <PlayCircleIcon className="w-5 h-5 text-purple-600" />
+            Test Results
+          </h3>
+          
+          {githubData.autograding.hasWorkflows ? (
+            <div className="space-y-4">
+              {githubData.autograding.totalRuns <= 1 ? (
+                <div className="border rounded-lg p-4 text-center">
+                  <ClockIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-600">Ready for your first commit!</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Make your first commit to your repository to start working on the challenges.
+                  </p>
+                </div>
+              ) : githubData.autograding.lastRun ? (
+                <div className="border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      {githubData.autograding.lastRun.passed ? (
+                        <CheckCircleIcon className="w-6 h-6 text-green-500" />
+                      ) : (
+                        <XCircleIcon className="w-6 h-6 text-red-500" />
+                      )}
+                      <div>
+                        <h4 className="font-semibold text-gray-900">
+                          {githubData.autograding.lastRun.passed ? 'Tests Passed!' : 'Tests Failed'}
+                        </h4>
+                        <p className="text-sm text-gray-600">
+                          {githubData.autograding.lastRun.passed 
+                            ? '¡Felicidades! Todos los tests han pasado exitosamente.'
+                            : 'Algunos tests no han pasado. Revisa los errores abajo.'
+                          }
+                        </p>
+                      </div>
+                    </div>
+                    {githubData.autograding.lastRun.score !== undefined && (
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-gray-900">
+                          {githubData.autograding.lastRun.score}%
+                        </div>
+                        <div className="text-sm text-gray-500">Score</div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="text-sm text-gray-500">
+                    Last run: {new Date(githubData.autograding.lastRun.created_at).toLocaleString()}
+                  </div>
+                  
+                  {/* Show failure details if available */}
+                  {!githubData.autograding.lastRun.passed && githubData.autograding.lastRun.failures && githubData.autograding.lastRun.failures.length > 0 && (
+                    <div className="mt-4 space-y-3">
+                      <div className="flex items-center gap-2 text-red-700">
+                        <AlertTriangleIcon className="w-4 h-4" />
+                        <span className="font-medium">Test Failures ({githubData.autograding.lastRun.failures.length})</span>
+                      </div>
+                      
+                      {githubData.autograding.lastRun.failures.map((failure) => (
+                        <div key={failure.jobId} className="border border-red-200 rounded-lg">
+                          <div 
+                            className="flex items-center justify-between p-3 bg-red-50 cursor-pointer hover:bg-red-100 transition-colors"
+                            onClick={() => toggleLogExpansion(failure.jobId)}
+                          >
+                            <div className="flex items-center gap-2">
+                              <XCircleIcon className="w-4 h-4 text-red-500" />
+                              <span className="font-medium text-red-900">{failure.jobName}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <a
+                                href={failure.htmlUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-red-600 hover:text-red-800 text-sm flex items-center gap-1"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <ExternalLinkIcon className="w-3 h-3" />
+                                GitHub
+                              </a>
+                              {expandedLogs[failure.jobId] ? (
+                                <ChevronUpIcon className="w-4 h-4 text-red-600" />
+                              ) : (
+                                <ChevronDownIcon className="w-4 h-4 text-red-600" />
+                              )}
+                            </div>
+                          </div>
+                          
+                          {expandedLogs[failure.jobId] && (
+                            <div className="p-3 border-t border-red-200">
+                              <div className="mb-3">
+                                <h5 className="font-medium text-gray-900 mb-2">Error Summary:</h5>
+                                <div className="bg-gray-100 p-3 rounded text-sm font-mono whitespace-pre-wrap text-gray-800">
+                                  {extractErrorSummary(failure.logs)}
+                                </div>
+                              </div>
+                              
+                              <details className="mt-3">
+                                <summary className="cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
+                                  View Full Logs
+                                </summary>
+                                <div className="mt-2 bg-gray-900 text-gray-100 p-3 rounded text-xs font-mono whitespace-pre-wrap max-h-60 overflow-y-auto">
+                                  {formatLogs(failure.logs)}
+                                </div>
+                              </details>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="border rounded-lg p-4 text-center">
+                  <ClockIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-600">No test results yet.</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Make your first commit to your repository to trigger autograding tests.
+                  </p>
+                </div>
+              )}
+              
+              {githubData.autograding.totalRuns > 1 && (
+                <div className="text-sm text-gray-500">
+                  Total test runs: {githubData.autograding.totalRuns}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="border rounded-lg p-4 text-center">
+              <PlayCircleIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+              <p className="text-gray-600">No autograding workflows configured.</p>
+              <p className="text-sm text-gray-500 mt-1">
+                Tests will be available once you make your first commit.
+              </p>
+            </div>
+          )}
         </div>
       )}
 
