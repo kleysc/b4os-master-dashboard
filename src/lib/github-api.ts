@@ -138,23 +138,58 @@ class GitHubAPIService {
     exists: boolean
     url: string
     hasAccess: boolean
+    statusCode: number
   }> {
     const studentRepoUrl = this.generateStudentRepoUrl(assignmentBaseName, githubUsername)
     
+    console.log('Checking student repository:', {
+      assignmentBaseName,
+      githubUsername,
+      studentRepoUrl
+    })
+    
     try {
-      const hasAccess = await this.checkRepositoryAccess(studentRepoUrl)
+      const { owner, name } = this.parseRepository(studentRepoUrl)
+      
+      console.log('📡 Making API call to:', `${this.baseUrl}/repos/${owner}/${name}`)
+      
+      const response = await fetch(`${this.baseUrl}/repos/${owner}/${name}`, {
+        headers: this.getHeaders()
+      })
+
+      const statusCode = response.status
+      
+      console.log('📊 GitHub API Response:', {
+        statusCode,
+        statusText: response.statusText,
+        url: studentRepoUrl
+      })
+      
+      // Repository exists if we get a 200 response
+      const exists = statusCode === 200
+      // User has access if we get 200 or 403 (exists but no access)
+      const hasAccess = statusCode === 200 || statusCode === 403
+      
+      console.log('✅ Repository check result:', {
+        exists,
+        hasAccess,
+        statusCode,
+        url: studentRepoUrl
+      })
       
       return {
-        exists: hasAccess,
+        exists,
         url: studentRepoUrl,
-        hasAccess
+        hasAccess,
+        statusCode
       }
     } catch (error) {
-      console.error('Error checking student repository:', error)
+      console.error('❌ Error checking student repository:', error)
       return {
         exists: false,
         url: studentRepoUrl,
-        hasAccess: false
+        hasAccess: false,
+        statusCode: 0
       }
     }
   }
