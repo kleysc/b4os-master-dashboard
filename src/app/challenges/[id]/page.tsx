@@ -8,6 +8,7 @@ import StorySection from '@/components/StorySection'
 import UserProfile from '@/components/UserProfile'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import GitHubIntegration from '@/components/GitHubIntegration'
+import CodeEditor from '@/components/CodeEditor'
 import { ArrowLeftIcon, HomeIcon, ClockIcon, CrownIcon } from 'lucide-react'
 import { Challenge } from '@/types/challenge'
 import Image from 'next/image'
@@ -47,6 +48,27 @@ function ChallengePageContent({ challenge }: { challenge: Challenge }) {
     'lightning-network': 'bg-purple-100 text-purple-800',
     'scripting': 'bg-green-100 text-green-800',
     'cryptography': 'bg-red-100 text-red-800',
+  }
+
+  // Determine challenge type (mutually exclusive)
+  const getChallengeType = () => {
+    if (challenge.metadata.type) {
+      return challenge.metadata.type
+    }
+    // Fallback logic for backward compatibility
+    if (challenge.metadata.github) {
+      return 'github'
+    } else if (challenge.validator) {
+      return 'inline'
+    }
+    return 'github' // default
+  }
+
+  const challengeType = getChallengeType()
+
+  const handleCodeChange = (code: string) => {
+    // Handle code changes - could save to localStorage or state
+    console.log('Code updated:', code)
   }
 
   return (
@@ -95,14 +117,36 @@ function ChallengePageContent({ challenge }: { challenge: Challenge }) {
           />
         )}
 
-        {/* GitHub Integration */}
-        {challenge.metadata.github && (
+        {/* GitHub Integration - only for github type */}
+        {challengeType === 'github' && challenge.metadata.github && (
           <GitHubIntegration
             templateRepository={challenge.metadata.github.templateRepository}
             assignmentSlug={challenge.metadata.github.assignmentSlug}
             fallbackContent={challenge.content}
             challenge={challenge}
           />
+        )}
+
+        {/* Code Editor - only for inline type */}
+        {challengeType === 'inline' && challenge.validator && challenge.initialCode && (
+          <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-900">
+              <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+              </svg>
+              Interactive Code Challenge
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Complete the challenge by writing code in the editor below and testing your solution.
+            </p>
+            <CodeEditor
+              initialCode={challenge.initialCode}
+              language={challenge.validator.language}
+              onCodeChange={handleCodeChange}
+              onValidate={challenge.validator.validate}
+              className="mb-4"
+            />
+          </div>
         )}
 
         <div className="max-w-4xl mx-auto space-y-6">
