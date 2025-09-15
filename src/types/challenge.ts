@@ -9,6 +9,8 @@ export interface ChallengeMetadata {
   prerequisites?: string[]
   chapterNumber?: number
   order?: number
+  // Challenge type - determines which interface to show (mutually exclusive)
+  type?: 'inline' | 'github' // inline = CodeEditor only, github = GitHub Classroom only
   // GitHub integration
   github?: {
     templateRepository: string // e.g., "B4OS-Dev/bitcoin-hash-challenge"
