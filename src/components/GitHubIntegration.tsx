@@ -13,18 +13,21 @@ interface TestFailure {
   htmlUrl: string
 }
 
+interface WorkflowRunResult {
+  id: number
+  status: string
+  conclusion: string | null
+  created_at: string
+  html_url: string
+  passed: boolean
+  score?: number
+  failures?: TestFailure[]
+}
+
 interface AutogradingResult {
   hasWorkflows: boolean
-  lastRun?: {
-    id: number
-    status: string
-    conclusion: string | null
-    created_at: string
-    html_url: string
-    passed: boolean
-    score?: number
-    failures?: TestFailure[]
-  }
+  lastRun?: WorkflowRunResult
+  allRuns?: WorkflowRunResult[]
   totalRuns: number
 }
 
@@ -77,6 +80,7 @@ export default function GitHubIntegration({
   const [error, setError] = useState<string | null>(null)
   const [validatingRepository, setValidatingRepository] = useState(false)
   const [expandedLogs, setExpandedLogs] = useState<Record<number, boolean>>({})
+  const [showAllRuns, setShowAllRuns] = useState(false)
   
   // Cache duration: 5 minutes
   const CACHE_DURATION = 5 * 60 * 1000
@@ -112,11 +116,11 @@ export default function GitHubIntegration({
   const extractErrorSummary = (logs: string): string => {
     const lines = logs.split('\n')
     const errorLines = []
-    
+
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i]
-      if (line.includes('FAILED') || 
-          line.includes('Error') || 
+      if (line.includes('FAILED') ||
+          line.includes('Error') ||
           line.includes('Expected') ||
           line.includes('AssertionError') ||
           line.toLowerCase().includes('test') && line.toLowerCase().includes('fail')) {
@@ -130,9 +134,124 @@ export default function GitHubIntegration({
         break
       }
     }
-    
+
     return errorLines.length > 0 ? errorLines.join('\n') : 'No specific error details found'
   }
+
+  // Render a single workflow run
+  const renderWorkflowRun = (run: WorkflowRunResult, isLatest: boolean = false) => (
+    <div key={run.id} className={`border rounded-lg p-4 ${isLatest ? 'border-blue-200 bg-blue-50' : 'border-gray-200'}`}>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-3">
+          {run.passed ? (
+            <CheckCircleIcon className="w-6 h-6 text-green-500" />
+          ) : (
+            <XCircleIcon className="w-6 h-6 text-red-500" />
+          )}
+          <div>
+            <h4 className="font-semibold text-gray-900 flex items-center gap-2">
+              {run.passed ? 'Tests Passed!' : 'Tests Failed'}
+              {isLatest && (
+                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium">
+                  Latest
+                </span>
+              )}
+            </h4>
+            <p className="text-sm text-gray-600">
+              {run.passed
+                ? '¡Felicidades! Todos los tests han pasado exitosamente.'
+                : 'Algunos tests no han pasado. Revisa los errores abajo.'
+              }
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          {run.score !== undefined && (
+            <div className="text-right">
+              <div className="text-2xl font-bold text-gray-900">
+                {run.score}%
+              </div>
+              <div className="text-sm text-gray-500">Score</div>
+            </div>
+          )}
+          <a
+            href={run.html_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1"
+          >
+            <ExternalLinkIcon className="w-4 h-4" />
+            GitHub
+          </a>
+        </div>
+      </div>
+
+      <div className="text-sm text-gray-500 mb-3">
+        Run #{run.id} • {new Date(run.created_at).toLocaleString()}
+      </div>
+
+      {/* Show failure details if available */}
+      {!run.passed && run.failures && run.failures.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-red-700">
+            <AlertTriangleIcon className="w-4 h-4" />
+            <span className="font-medium">Test Failures ({run.failures.length})</span>
+          </div>
+
+          {run.failures.map((failure) => (
+            <div key={failure.jobId} className="border border-red-200 rounded-lg">
+              <div
+                className="flex items-center justify-between p-3 bg-red-50 cursor-pointer hover:bg-red-100 transition-colors"
+                onClick={() => toggleLogExpansion(failure.jobId)}
+              >
+                <div className="flex items-center gap-2">
+                  <XCircleIcon className="w-4 h-4 text-red-500" />
+                  <span className="font-medium text-red-900">{failure.jobName}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <a
+                    href={failure.htmlUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-red-600 hover:text-red-800 text-sm flex items-center gap-1"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <ExternalLinkIcon className="w-3 h-3" />
+                    GitHub
+                  </a>
+                  {expandedLogs[failure.jobId] ? (
+                    <ChevronUpIcon className="w-4 h-4 text-red-600" />
+                  ) : (
+                    <ChevronDownIcon className="w-4 h-4 text-red-600" />
+                  )}
+                </div>
+              </div>
+
+              {expandedLogs[failure.jobId] && (
+                <div className="p-3 border-t border-red-200">
+                  <div className="mb-3">
+                    <h5 className="font-medium text-gray-900 mb-2">Error Summary:</h5>
+                    <div className="bg-gray-100 p-3 rounded text-sm font-mono whitespace-pre-wrap text-gray-800">
+                      {extractErrorSummary(failure.logs)}
+                    </div>
+                  </div>
+
+                  <details className="mt-3">
+                    <summary className="cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
+                      View Full Logs
+                    </summary>
+                    <div className="mt-2 bg-gray-900 text-gray-100 p-3 rounded text-xs font-mono whitespace-pre-wrap max-h-60 overflow-y-auto">
+                      {formatLogs(failure.logs)}
+                    </div>
+                  </details>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
 
   // Return the original repository README content exactly as it is
   const getOriginalReadme = () => {
@@ -167,7 +286,7 @@ Bienvenido al proceso de desarrollo y evaluación para ejercicios. Queremos aseg
 
 4. **Finalización del proceso**: Una vez que todas las pruebas automatizadas hayan pasado con éxito y se haya completado la revisión de código manual, el proceso de evaluación habrá terminado. Mantente atento a cualquier comentario adicional o instrucción adicional que puedas recibir.
 
-Recuerda, estamos aquí para apoyarte en cada paso del camino. ¡Feliz codificación!`
+Recuerda, estamos aquí para apoyarte en cada paso del camino. Happy hacking!`
   }
 
   // Smart routing using backend data - enhanced with server token validation
@@ -390,99 +509,41 @@ Recuerda, estamos aquí para apoyarte en cada paso del camino. ¡Feliz codificac
                     Make your first commit to your repository to start working on the challenges.
                   </p>
                 </div>
-              ) : githubData.autograding.lastRun ? (
-                <div className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      {githubData.autograding.lastRun.passed ? (
-                        <CheckCircleIcon className="w-6 h-6 text-green-500" />
-                      ) : (
-                        <XCircleIcon className="w-6 h-6 text-red-500" />
-                      )}
-                      <div>
-                        <h4 className="font-semibold text-gray-900">
-                          {githubData.autograding.lastRun.passed ? 'Tests Passed!' : 'Tests Failed'}
+              ) : githubData.autograding.allRuns && githubData.autograding.allRuns.length > 0 ? (
+                <div className="space-y-4">
+                  {/* Show latest run */}
+                  {githubData.autograding.lastRun && renderWorkflowRun(githubData.autograding.lastRun, true)}
+
+                  {/* Show historical runs if there are more than one */}
+                  {githubData.autograding.allRuns.length > 1 && (
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-medium text-gray-900">
+                          Previous Runs ({githubData.autograding.allRuns.length - 1})
                         </h4>
-                        <p className="text-sm text-gray-600">
-                          {githubData.autograding.lastRun.passed 
-                            ? '¡Felicidades! Todos los tests han pasado exitosamente.'
-                            : 'Algunos tests no han pasado. Revisa los errores abajo.'
-                          }
-                        </p>
-                      </div>
-                    </div>
-                    {githubData.autograding.lastRun.score !== undefined && (
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-gray-900">
-                          {githubData.autograding.lastRun.score}%
-                        </div>
-                        <div className="text-sm text-gray-500">Score</div>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="text-sm text-gray-500">
-                    Last run: {new Date(githubData.autograding.lastRun.created_at).toLocaleString()}
-                  </div>
-                  
-                  {/* Show failure details if available */}
-                  {!githubData.autograding.lastRun.passed && githubData.autograding.lastRun.failures && githubData.autograding.lastRun.failures.length > 0 && (
-                    <div className="mt-4 space-y-3">
-                      <div className="flex items-center gap-2 text-red-700">
-                        <AlertTriangleIcon className="w-4 h-4" />
-                        <span className="font-medium">Test Failures ({githubData.autograding.lastRun.failures.length})</span>
-                      </div>
-                      
-                      {githubData.autograding.lastRun.failures.map((failure) => (
-                        <div key={failure.jobId} className="border border-red-200 rounded-lg">
-                          <div 
-                            className="flex items-center justify-between p-3 bg-red-50 cursor-pointer hover:bg-red-100 transition-colors"
-                            onClick={() => toggleLogExpansion(failure.jobId)}
-                          >
-                            <div className="flex items-center gap-2">
-                              <XCircleIcon className="w-4 h-4 text-red-500" />
-                              <span className="font-medium text-red-900">{failure.jobName}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <a
-                                href={failure.htmlUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-red-600 hover:text-red-800 text-sm flex items-center gap-1"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <ExternalLinkIcon className="w-3 h-3" />
-                                GitHub
-                              </a>
-                              {expandedLogs[failure.jobId] ? (
-                                <ChevronUpIcon className="w-4 h-4 text-red-600" />
-                              ) : (
-                                <ChevronDownIcon className="w-4 h-4 text-red-600" />
-                              )}
-                            </div>
-                          </div>
-                          
-                          {expandedLogs[failure.jobId] && (
-                            <div className="p-3 border-t border-red-200">
-                              <div className="mb-3">
-                                <h5 className="font-medium text-gray-900 mb-2">Error Summary:</h5>
-                                <div className="bg-gray-100 p-3 rounded text-sm font-mono whitespace-pre-wrap text-gray-800">
-                                  {extractErrorSummary(failure.logs)}
-                                </div>
-                              </div>
-                              
-                              <details className="mt-3">
-                                <summary className="cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
-                                  View Full Logs
-                                </summary>
-                                <div className="mt-2 bg-gray-900 text-gray-100 p-3 rounded text-xs font-mono whitespace-pre-wrap max-h-60 overflow-y-auto">
-                                  {formatLogs(failure.logs)}
-                                </div>
-                              </details>
-                            </div>
+                        <button
+                          onClick={() => setShowAllRuns(!showAllRuns)}
+                          className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                        >
+                          {showAllRuns ? (
+                            <>
+                              <ChevronUpIcon className="w-4 h-4" />
+                              Hide Previous Runs
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDownIcon className="w-4 h-4" />
+                              Show Previous Runs
+                            </>
                           )}
+                        </button>
+                      </div>
+
+                      {showAllRuns && (
+                        <div className="space-y-3">
+                          {githubData.autograding.allRuns.slice(1).map((run) => renderWorkflowRun(run, false))}
                         </div>
-                      ))}
+                      )}
                     </div>
                   )}
                 </div>
@@ -495,7 +556,7 @@ Recuerda, estamos aquí para apoyarte en cada paso del camino. ¡Feliz codificac
                   </p>
                 </div>
               )}
-              
+
               {githubData.autograding.totalRuns > 1 && (
                 <div className="text-sm text-gray-500">
                   Total test runs: {githubData.autograding.totalRuns}
