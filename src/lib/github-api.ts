@@ -55,18 +55,21 @@ interface TestFailure {
   htmlUrl: string
 }
 
+interface WorkflowRunResult {
+  id: number
+  status: string
+  conclusion: string | null
+  created_at: string
+  html_url: string
+  passed: boolean
+  score?: number
+  failures?: TestFailure[]
+}
+
 interface AutogradingResult {
   hasWorkflows: boolean
-  lastRun?: {
-    id: number
-    status: string
-    conclusion: string | null
-    created_at: string
-    html_url: string
-    passed: boolean
-    score?: number
-    failures?: TestFailure[]
-  }
+  lastRun?: WorkflowRunResult
+  allRuns?: WorkflowRunResult[]
   totalRuns: number
 }
 
@@ -252,9 +255,9 @@ class GitHubAPIService {
   async fetchAutogradingResults(repoUrl: string): Promise<AutogradingResult> {
     try {
       const { owner, name } = this.parseRepository(repoUrl)
-      
+
       console.log('Fetching workflow runs for:', { owner, name })
-      
+
       const response = await fetch(`${this.baseUrl}/repos/${owner}/${name}/actions/runs?per_page=10`, {
         headers: this.getHeaders()
       })
@@ -268,7 +271,7 @@ class GitHubAPIService {
       }
 
       const data: GitHubWorkflowRunsResponse = await response.json()
-      
+
       console.log('Workflow runs response:', {
         total_count: data.total_count,
         runs: data.workflow_runs.length
@@ -281,15 +284,15 @@ class GitHubAPIService {
         }
       }
 
-      // Get the most recent completed workflow run (only success or failure)
-      const lastRun = data.workflow_runs
-        .filter(run => 
-          run.status === 'completed' && 
+      // Get all completed workflow runs (success or failure)
+      const completedRuns = data.workflow_runs
+        .filter(run =>
+          run.status === 'completed' &&
           (run.conclusion === 'success' || run.conclusion === 'failure')
         )
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
-      if (!lastRun) {
+      if (completedRuns.length === 0) {
         // Check if there are any runs at all
         const hasAnyRuns = data.workflow_runs.length > 0
         return {
@@ -299,34 +302,42 @@ class GitHubAPIService {
         }
       }
 
-      const passed = lastRun.conclusion === 'success'
-      
-      console.log('Latest workflow run:', {
-        id: lastRun.id,
-        status: lastRun.status,
-        conclusion: lastRun.conclusion,
-        passed
-      })
+      // Process all completed runs
+      const allRuns: WorkflowRunResult[] = []
 
-      // Fetch failure logs if the run failed
-      let failures: TestFailure[] = []
-      if (!passed && lastRun.conclusion === 'failure') {
-        console.log('Fetching failure logs for run:', lastRun.id)
-        failures = await this.fetchWorkflowJobLogs(repoUrl, lastRun.id)
-      }
+      for (const run of completedRuns) {
+        const passed = run.conclusion === 'success'
 
-      return {
-        hasWorkflows: true,
-        lastRun: {
-          id: lastRun.id,
-          status: lastRun.status,
-          conclusion: lastRun.conclusion,
-          created_at: lastRun.created_at,
-          html_url: lastRun.html_url,
+        // Fetch failure logs if the run failed
+        let failures: TestFailure[] = []
+        if (!passed && run.conclusion === 'failure') {
+          console.log('Fetching failure logs for run:', run.id)
+          failures = await this.fetchWorkflowJobLogs(repoUrl, run.id)
+        }
+
+        allRuns.push({
+          id: run.id,
+          status: run.status,
+          conclusion: run.conclusion,
+          created_at: run.created_at,
+          html_url: run.html_url,
           passed,
           score: passed ? 100 : 0, // Basic scoring - can be enhanced later
           failures: failures.length > 0 ? failures : undefined
-        },
+        })
+      }
+
+      const lastRun = allRuns[0] // Most recent
+
+      console.log('Processed workflow runs:', {
+        total: allRuns.length,
+        latest: lastRun ? { id: lastRun.id, passed: lastRun.passed } : 'none'
+      })
+
+      return {
+        hasWorkflows: true,
+        lastRun,
+        allRuns,
         totalRuns: data.total_count
       }
     } catch (error) {
@@ -413,4 +424,4 @@ export const createServerGitHubAPI = () => {
   return new GitHubAPIService(serverToken)
 }
 
-export type { GitHubRepository, GitHubContent, GitHubWorkflowRun, AutogradingResult, TestFailure }
+export type { GitHubRepository, GitHubContent, GitHubWorkflowRun, AutogradingResult, WorkflowRunResult, TestFailure }
