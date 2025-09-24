@@ -418,7 +418,7 @@ export class SupabaseService {
     status: 'pending' | 'in_progress' | 'completed'
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      const updateData: any = { status }
+      const updateData: { status: string; completed_at?: string } = { status }
       if (status === 'completed') {
         updateData.completed_at = new Date().toISOString()
       }

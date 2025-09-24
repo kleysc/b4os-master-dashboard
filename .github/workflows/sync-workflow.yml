@@ -1,0 +1,93 @@
+name: Sync Classroom Data (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      classroom_name:
+        required: true
+        type: string
+        default: 'B4OS-Dev-2025'
+      assignment_id:
+        required: false
+        type: string
+        default: ''
+      log_level:
+        required: false
+        type: string
+        default: 'INFO'
+    outputs:
+      sync-status:
+        description: "Status of sync operation"
+        value: ${{ jobs.sync-classroom.outputs.status }}
+      sync-message:
+        description: "Sync operation message"
+        value: ${{ jobs.sync-classroom.outputs.message }}
+
+jobs:
+  sync-classroom:
+    runs-on: ubuntu-latest
+    name: Sync Classroom Data
+    
+    outputs:
+      status: ${{ steps.sync.outcome }}
+      message: ${{ steps.sync.outputs.message }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install GitHub CLI
+      run: |
+        curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+        sudo apt update
+        sudo apt install gh
+    
+    - name: Authenticate GitHub CLI
+      run: |
+        echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+    
+    - name: Install Python dependencies
+      run: |
+        cd b4os-backend
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Run classroom sync
+      id: sync
+      working-directory: ./b4os-backend
+      env:
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        CLASSROOM_NAME: ${{ inputs.classroom_name }}
+        ASSIGNMENT_ID: ${{ inputs.assignment_id }}
+        LOG_LEVEL: ${{ inputs.log_level }}
+      run: |
+        echo "Starting sync for classroom: ${{ inputs.classroom_name }}"
+        if [ -n "${{ inputs.assignment_id }}" ]; then
+          echo "Targeting specific assignment: ${{ inputs.assignment_id }}"
+        fi
+        
+        python sync-classroom.py
+        
+        if [ $? -eq 0 ]; then
+          echo "Sync completed successfully"
+          echo "message=Sync completed successfully for ${{ inputs.classroom_name }}" >> $GITHUB_OUTPUT
+        else
+          echo "Sync failed"
+          echo "message=Sync failed for ${{ inputs.classroom_name }}" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+    
+    - name: Upload sync logs
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: sync-logs-${{ github.run_number }}-${{ inputs.classroom_name }}
+        path: b4os-backend/logs/
+        retention-days: 30

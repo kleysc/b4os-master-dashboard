@@ -530,7 +530,7 @@ export default function ReviewSystem({
                   </label>
                   <select
                     value={commentType}
-                    onChange={(e) => setCommentType(e.target.value as any)}
+                    onChange={(e) => setCommentType(e.target.value as 'general' | 'code_quality' | 'functionality' | 'documentation' | 'suggestion')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white text-gray-900"
                   >
                     <option value="general">General</option>
@@ -546,7 +546,7 @@ export default function ReviewSystem({
                   </label>
                   <select
                     value={commentPriority}
-                    onChange={(e) => setCommentPriority(e.target.value as any)}
+                    onChange={(e) => setCommentPriority(e.target.value as 'low' | 'medium' | 'high')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white text-gray-900"
                   >
                     <option value="low">Baja</option>
