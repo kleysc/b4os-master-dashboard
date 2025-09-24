@@ -54,19 +54,54 @@ export const authOptions = {
           token.githubId = (profile as { id?: string })?.id
           token.username = (profile as { login?: string })?.login
 
-          // Temporalmente asignar rol admin sin verificación para debugging
           console.log(`[JWT DEBUG] First login for user: ${token.username} (ID: ${token.githubId})`)
-          token.role = 'admin' as UserRole
-          token.isAuthorized = true
-          token.lastValidated = Date.now()
-          console.log(`[JWT DEBUG] Token created successfully for user: ${token.username}`)
+
+          // Verificar autorización en la base de datos
+          const authResult = await AuthorizationService.checkUserAuthorization(
+            parseInt(token.githubId)
+          )
+
+          if (authResult.isAuthorized) {
+            token.role = authResult.role as UserRole
+            token.isAuthorized = true
+            token.lastValidated = Date.now()
+
+            // Actualizar último login
+            await AuthorizationService.updateLastLogin(parseInt(token.githubId))
+
+            console.log(`[JWT DEBUG] User ${token.username} authorized with role: ${token.role}`)
+          } else {
+            token.role = undefined
+            token.isAuthorized = false
+            token.lastValidated = Date.now()
+            console.log(`[JWT DEBUG] User ${token.username} NOT authorized`)
+          }
         } else {
-          // Temporalmente no revalidar para debugging
-          console.log(`[JWT DEBUG] Subsequent request for user: ${token.username}`)
+          // En requests subsequentes, revalidar cada 30 minutos
+          const now = Date.now()
+          const lastValidated = token.lastValidated || 0
+          const thirtyMinutes = 30 * 60 * 1000
+
+          if (now - lastValidated > thirtyMinutes) {
+            console.log(`[JWT DEBUG] Revalidating authorization for user: ${token.username}`)
+
+            const authResult = await AuthorizationService.checkUserAuthorization(
+              parseInt(token.githubId)
+            )
+
+            token.role = authResult.isAuthorized ? authResult.role as UserRole : undefined
+            token.isAuthorized = authResult.isAuthorized
+            token.lastValidated = now
+
+            console.log(`[JWT DEBUG] Revalidation result for ${token.username}: ${authResult.isAuthorized}`)
+          }
         }
         return token
       } catch (error) {
         console.error('[AUTH ERROR] JWT callback error:', error)
+        // En caso de error, mantener el token pero marcar como no autorizado
+        token.isAuthorized = false
+        token.role = undefined
         return token
       }
     },
