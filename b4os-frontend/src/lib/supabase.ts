@@ -43,6 +43,31 @@ export interface ConsolidatedGrade {
   percentage: number | null
 }
 
+export interface StudentReviewer {
+  id: number
+  student_username: string
+  reviewer_username: string
+  assignment_name: string
+  status: 'pending' | 'in_progress' | 'completed'
+  code_quality_score?: number
+  assigned_at: string
+  completed_at?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface ReviewComment {
+  id: number
+  student_username: string
+  reviewer_username: string
+  assignment_name: string
+  comment: string
+  comment_type: 'general' | 'code_quality' | 'functionality' | 'documentation' | 'suggestion'
+  priority: 'low' | 'medium' | 'high'
+  created_at: string
+  updated_at: string
+}
+
 // Database functions
 export class SupabaseService {
   // Get all students
@@ -309,5 +334,219 @@ export class SupabaseService {
     })
 
     return breakdown
+  }
+
+  // Review System Methods
+
+  // Get all student reviewers
+  static async getStudentReviewers(): Promise<StudentReviewer[]> {
+    const { data, error } = await supabase
+      .from('student_reviewers')
+      .select('*')
+      .order('created_at', { ascending: false })
+    
+    if (error) {
+      throw new Error(`Failed to fetch student reviewers: ${error.message}`)
+    }
+    
+    return data || []
+  }
+
+  // Get reviewers for a specific student
+  static async getStudentReviewersByStudent(studentUsername: string): Promise<StudentReviewer[]> {
+    const { data, error } = await supabase
+      .from('student_reviewers')
+      .select('*')
+      .eq('student_username', studentUsername)
+      .order('created_at', { ascending: false })
+    
+    if (error) {
+      throw new Error(`Failed to fetch reviewers for student: ${error.message}`)
+    }
+    
+    return data || []
+  }
+
+  // Get assignments assigned to a reviewer
+  static async getReviewerAssignments(reviewerUsername: string): Promise<StudentReviewer[]> {
+    const { data, error } = await supabase
+      .from('student_reviewers')
+      .select('*')
+      .eq('reviewer_username', reviewerUsername)
+      .order('created_at', { ascending: false })
+    
+    if (error) {
+      throw new Error(`Failed to fetch reviewer assignments: ${error.message}`)
+    }
+    
+    return data || []
+  }
+
+  // Assign a reviewer to a student
+  static async assignReviewer(
+    studentUsername: string,
+    reviewerUsername: string,
+    assignmentName: string
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { error } = await supabase
+        .from('student_reviewers')
+        .insert({
+          student_username: studentUsername,
+          reviewer_username: reviewerUsername,
+          assignment_name: assignmentName,
+          status: 'pending',
+          assigned_at: new Date().toISOString()
+        })
+
+      if (error) {
+        throw new Error(`Failed to assign reviewer: ${error.message}`)
+      }
+
+      return { success: true }
+    } catch (error) {
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      }
+    }
+  }
+
+  // Update reviewer status
+  static async updateReviewerStatus(
+    id: number,
+    status: 'pending' | 'in_progress' | 'completed'
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const updateData: any = { status }
+      if (status === 'completed') {
+        updateData.completed_at = new Date().toISOString()
+      }
+
+      const { error } = await supabase
+        .from('student_reviewers')
+        .update(updateData)
+        .eq('id', id)
+
+      if (error) {
+        throw new Error(`Failed to update reviewer status: ${error.message}`)
+      }
+
+      return { success: true }
+    } catch (error) {
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      }
+    }
+  }
+
+  // Update code quality score
+  static async updateCodeQualityScore(
+    id: number,
+    score: number
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      if (score < 1 || score > 10) {
+        throw new Error('Code quality score must be between 1 and 10')
+      }
+
+      const { error } = await supabase
+        .from('student_reviewers')
+        .update({ 
+          code_quality_score: score,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+
+      if (error) {
+        throw new Error(`Failed to update code quality score: ${error.message}`)
+      }
+
+      return { success: true }
+    } catch (error) {
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      }
+    }
+  }
+
+  // Get review comments for a student
+  static async getReviewComments(
+    studentUsername: string,
+    assignmentName?: string
+  ): Promise<ReviewComment[]> {
+    let query = supabase
+      .from('review_comments')
+      .select('*')
+      .eq('student_username', studentUsername)
+      .order('created_at', { ascending: false })
+
+    if (assignmentName) {
+      query = query.eq('assignment_name', assignmentName)
+    }
+
+    const { data, error } = await query
+
+    if (error) {
+      throw new Error(`Failed to fetch review comments: ${error.message}`)
+    }
+    
+    return data || []
+  }
+
+  // Add a review comment
+  static async addReviewComment(
+    studentUsername: string,
+    reviewerUsername: string,
+    assignmentName: string,
+    comment: string,
+    commentType: 'general' | 'code_quality' | 'functionality' | 'documentation' | 'suggestion',
+    priority: 'low' | 'medium' | 'high'
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { error } = await supabase
+        .from('review_comments')
+        .insert({
+          student_username: studentUsername,
+          reviewer_username: reviewerUsername,
+          assignment_name: assignmentName,
+          comment,
+          comment_type: commentType,
+          priority
+        })
+
+      if (error) {
+        throw new Error(`Failed to add review comment: ${error.message}`)
+      }
+
+      return { success: true }
+    } catch (error) {
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      }
+    }
+  }
+
+  // Get available reviewers (admins from authorized_users)
+  static async getAvailableReviewers(): Promise<Array<{
+    github_username: string
+    full_name?: string
+    email?: string
+  }>> {
+    const { data, error } = await supabase
+      .from('authorized_users')
+      .select('github_username, full_name, email')
+      .eq('role', 'admin')
+      .eq('status', 'active')
+      .order('github_username')
+    
+    if (error) {
+      throw new Error(`Failed to fetch available reviewers: ${error.message}`)
+    }
+    
+    return data || []
   }
 }
