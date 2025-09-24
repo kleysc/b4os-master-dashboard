@@ -29,12 +29,21 @@ export default function UserProfile() {
     }
   }, [isOpen])
 
-  // Debug logging
-  logger.debug('UserProfile session loaded', { 
-    hasSession: !!session, 
-    userRole: session?.user?.role,
-    isAdmin: isAdmin(session?.user?.role)
-  })
+  // Debug logging only on status change, avoid duplicates
+  useEffect(() => {
+    const sessionKey = `${status}-${session?.user?.username || 'none'}`
+    const lastSessionKey = sessionStorage.getItem('lastUserProfileLog')
+
+    if (lastSessionKey !== sessionKey) {
+      logger.debug('UserProfile session loaded', {
+        hasSession: !!session,
+        userRole: session?.user?.role,
+        isAdmin: isAdmin(session?.user?.role),
+        status
+      })
+      sessionStorage.setItem('lastUserProfileLog', sessionKey)
+    }
+  }, [session, status])
 
   if (status === 'loading') {
     return (

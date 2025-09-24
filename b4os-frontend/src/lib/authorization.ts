@@ -28,6 +28,7 @@ export class AuthorizationService {
    */
   static async checkUserAuthorization(githubId: number): Promise<AuthorizationResult> {
     try {
+      console.log(`[AUTHORIZATION DEBUG] Checking authorization for GitHub user ID: ${githubId}`)
       logger.info(`Checking authorization for GitHub user ID: ${githubId}`)
 
       const { data, error } = await supabase
@@ -36,6 +37,8 @@ export class AuthorizationService {
         .eq('github_id', githubId)
         .eq('status', 'active')
         .single()
+      
+      console.log(`[AUTHORIZATION DEBUG] Supabase query result:`, { data, error })
 
       if (error) {
         if (error.code === 'PGRST116') {

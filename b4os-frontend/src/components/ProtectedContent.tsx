@@ -1,7 +1,7 @@
 'use client'
 
 import { useSession } from "next-auth/react"
-import { ReactNode } from "react"
+import { ReactNode, useEffect, useRef } from "react"
 import Image from "next/image"
 import UserProfile from "@/components/UserProfile"
 import { RefreshCwIcon } from "lucide-react"
@@ -12,14 +12,20 @@ interface ProtectedContentProps {
 
 export default function ProtectedContent({ children }: ProtectedContentProps) {
   const { data: session, status } = useSession()
-  
-  // Debug info
-  console.log("ProtectedContent render:", {
-    status,
-    hasSession: !!session,
-    isAuthorized: session?.user?.isAuthorized,
-    user: session?.user
-  });
+  const prevStatusRef = useRef<string>()
+
+  // Debug info only on status change
+  useEffect(() => {
+    if (prevStatusRef.current !== status) {
+      console.log("ProtectedContent status change:", {
+        status,
+        hasSession: !!session,
+        isAuthorized: session?.user?.isAuthorized,
+        user: session?.user
+      });
+      prevStatusRef.current = status
+    }
+  }, [status, session])
 
   // Mostrar loading mientras se verifica la sesión
   if (status === "loading") {
@@ -40,11 +46,10 @@ export default function ProtectedContent({ children }: ProtectedContentProps) {
         <div className="text-center max-w-lg mx-auto px-6">
           {/* Logo */}
           <div className="w-24 h-24 bg-white rounded-2xl p-3 flex items-center justify-center shadow-2xl mx-auto mb-8">
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src="/web-app-manifest-192x192.png"
               alt="B4OS Logo"
-              width={72}
-              height={72}
               className="w-18 h-18 object-contain"
             />
           </div>
@@ -80,11 +85,10 @@ export default function ProtectedContent({ children }: ProtectedContentProps) {
         <div className="text-center max-w-lg mx-auto px-6">
           {/* Logo */}
           <div className="w-24 h-24 bg-white rounded-2xl p-3 flex items-center justify-center shadow-2xl mx-auto mb-8">
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src="/web-app-manifest-192x192.png"
               alt="B4OS Logo"
-              width={72}
-              height={72}
               className="w-18 h-18 object-contain"
             />
           </div>
