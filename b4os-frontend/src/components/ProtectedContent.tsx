@@ -1,7 +1,7 @@
 'use client'
 
 import { useSession } from "next-auth/react"
-import { ReactNode } from "react"
+import { ReactNode, useEffect, useRef } from "react"
 import Image from "next/image"
 import UserProfile from "@/components/UserProfile"
 import { RefreshCwIcon } from "lucide-react"
@@ -12,14 +12,20 @@ interface ProtectedContentProps {
 
 export default function ProtectedContent({ children }: ProtectedContentProps) {
   const { data: session, status } = useSession()
-  
-  // Debug info
-  console.log("ProtectedContent render:", {
-    status,
-    hasSession: !!session,
-    isAuthorized: session?.user?.isAuthorized,
-    user: session?.user
-  });
+  const prevStatusRef = useRef<string>()
+
+  // Debug info only on status change - prevents infinite loops
+  useEffect(() => {
+    if (prevStatusRef.current !== status) {
+      console.log("ProtectedContent status change:", {
+        status,
+        hasSession: !!session,
+        isAuthorized: session?.user?.isAuthorized,
+        user: session?.user
+      });
+      prevStatusRef.current = status
+    }
+  }, [status, session])
 
   // Mostrar loading mientras se verifica la sesión
   if (status === "loading") {
