@@ -69,19 +69,11 @@ function AuthErrorContent() {
           {/* Actions */}
           <div className="space-y-3">
             <Link
-              href="/auth/signin"
-              className="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Try Again
-            </Link>
-
-            <Link
               href="/"
               className="w-full flex items-center justify-center gap-3 bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-lg transition-colors"
             >
               <Home className="w-4 h-4" />
-              Back to Home
+              Volver al Inicio
             </Link>
           </div>
 

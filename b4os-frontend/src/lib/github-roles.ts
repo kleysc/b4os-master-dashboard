@@ -19,33 +19,12 @@ const ROLE_TEAM_MAPPING: Record<string, UserRole> = {
   // Teams like: galileo, Newton, Tesla, Watson from your screenshot
 }
 
-// Hardcoded admin users for testing
-const ADMIN_USERS = ['kleysc']
 
 export async function getUserRoleFromGitHubTeams(
   accessToken: string,
   orgName: string = 'B4OS-Dev'
 ): Promise<UserRole> {
   try {
-    // First fetch user info to check hardcoded admins
-    const userResponse = await fetch(`https://api.github.com/user`, {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Accept': 'application/vnd.github.v3+json',
-      },
-    })
-
-    if (userResponse.ok) {
-      const userInfo = await userResponse.json()
-      const username = userInfo.login
-
-      // Check hardcoded admin users
-      if (ADMIN_USERS.includes(username)) {
-        logger.debug(`User ${username} is hardcoded admin`)
-        return 'admin'
-      }
-    }
-
     // Fetch user's teams from the organization
     const response = await fetch(`https://api.github.com/user/teams`, {
       headers: {
