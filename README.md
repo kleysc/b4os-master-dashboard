@@ -1,117 +1,163 @@
-# B4OS Challenges
+# B4OS Master Dashboard
 
-> Interactive Bitcoin & Lightning Network development platform
+Dashboard administrativo para el programa Bitcoin 4 Open Source (B4OS) que permite monitorear el progreso de los estudiantes en sus assignments de GitHub Classroom.
 
-[![Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3-38B2AC)](https://tailwindcss.com/)
-[![NextAuth.js](https://img.shields.io/badge/NextAuth.js-5-000000)](https://next-auth.js.org/)
+## Características
 
-## Overview
+- **Dashboard en tiempo real** con estadísticas de estudiantes
+- **Sistema de autenticación** con GitHub OAuth
+- **Ranking dinámico** basado en tiempo de resolución
+- **Filtros avanzados** para análisis de datos
+- **Tooltips informativos** con actividad de GitHub
+- **Vista responsive** para desktop y móvil
+- **Sincronización automática** con GitHub Classroom
 
-B4OS Challenges is a modern web platform for learning Bitcoin and Lightning Network development through hands-on coding challenges. Built with Next.js 15 and TypeScript, it provides an interactive learning experience with real-time code validation.
+## Estructura del Proyecto
 
-## Features
+```
+b4os-admin/
+├── b4os-frontend/          # Aplicación Next.js
+│   ├── src/
+│   │   ├── app/            # Páginas principales
+│   │   ├── components/     # Componentes React
+│   │   └── lib/           # Utilidades y servicios
+│   ├── public/            # Assets estáticos
+│   └── package.json       # Dependencias del frontend
+├── b4os-backend/          # Scripts de Python
+│   ├── src/lib/           # Lógica de sincronización
+│   ├── requirements.txt   # Dependencias de Python
+│   └── README.md         # Documentación del backend
+└── README.md             # Este archivo
+```
 
-- **🔐 GitHub OAuth Authentication** - Secure user management
-- **🛡️ Protected Routes** - Challenge access control
-- **💻 Monaco Editor** - Professional code editing experience
-- **✅ Real-time Validation** - Instant feedback on code execution
-- **📱 Responsive Design** - Mobile-first approach
-- **🎯 Modular Architecture** - Scalable challenge system
+## Tecnologías
 
-## Tech Stack
+### Frontend
+- **Next.js 15** - Framework React
+- **TypeScript** - Tipado estático
+- **Tailwind CSS** - Estilos
+- **NextAuth.js** - Autenticación
+- **Supabase** - Base de datos
+- **Lucide React** - Iconos
 
-- **Framework:** Next.js 15 (App Router)
-- **Language:** TypeScript
-- **Styling:** Tailwind CSS
-- **Authentication:** NextAuth.js
-- **Editor:** Monaco Editor
-- **Deployment:** Vercel-ready
+### Backend
+- **Python 3.8+** - Lenguaje principal
+- **Supabase-py** - Cliente de base de datos
+- **GitHub CLI** - Integración con GitHub
+- **Requests** - Cliente HTTP
 
-## Quick Start
+## Instalación y Configuración
 
+### Prerrequisitos
+- Node.js 18+
+- Python 3.8+
+- Cuenta de GitHub
+- Proyecto de Supabase
+
+### Frontend
 ```bash
-# Clone repository
-git clone https://github.com/kleysc/landing-challenges.git
-cd landing-challenges
-
-# Install dependencies
+cd b4os-frontend
 npm install
-
-# Setup environment variables
-cp .env.example .env.local
-# Configure GitHub OAuth credentials
-
-# Run development server
+cp env.example .env.local
+# Configurar variables de entorno en .env.local
 npm run dev
 ```
 
-## Environment Variables
-
-```env
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=your-secret-key
-GITHUB_ID=your-github-client-id
-GITHUB_SECRET=your-github-client-secret
-```
-
-## Project Structure
-
-```
-src/
-├── app/                    # Next.js App Router
-│   ├── challenges/         # Challenge pages
-│   └── auth/              # Authentication pages
-├── challenges/            # Challenge definitions
-│   ├── bitcoin-basics/    # Bitcoin challenges
-│   └── lightning-network/ # Lightning challenges
-├── components/            # Reusable components
-├── lib/                   # Utilities & configuration
-└── types/                 # TypeScript definitions
-```
-
-## Challenges
-
-### Bitcoin Basics
-- **SHA-256 Hashing** - Learn cryptographic hashing fundamentals
-
-### Lightning Network
-- **Invoice Parser** - Parse and validate Lightning invoices
-
-## Development
-
+### Backend
 ```bash
-# Type checking
-npm run type-check
-
-# Linting
-npm run lint
-
-# Build for production
-npm run build
-
-# Start production server
-npm start
+cd b4os-backend
+pip install -r requirements.txt
+cp env.example .env.local
+# Configurar variables de entorno en .env.local
+python sync-classroom.py
 ```
 
-## Contributing
+## ⚙️ Variables de Entorno
 
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
+### Frontend (.env.local)
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+GITHUB_ID=your_github_oauth_id
+GITHUB_SECRET=your_github_oauth_secret
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your_nextauth_secret
+```
 
-## License
+### Backend (.env.local)
+```env
+SUPABASE_URL=your_supabase_url
+SUPABASE_KEY=your_supabase_service_key
+GITHUB_TOKEN=your_github_token
+CLASSROOM_NAME=your_classroom_name
+```
 
-MIT License - see [LICENSE](LICENSE) for details.
+## Funcionalidades
 
-## Support
+### Dashboard Principal
+- **Estadísticas generales**: Total de estudiantes, assignments, puntuación promedio
+- **Tabla de ranking**: Ordenada por tiempo de resolución
+- **Filtros dinámicos**: Por estado, tiempo, porcentaje
+- **Ordenamiento**: Por columnas individuales
 
-- **Issues:** [GitHub Issues](https://github.com/kleysc/landing-challenges/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/kleysc/landing-challenges/discussions)
+### Sistema de Autenticación
+- **Login con GitHub**: OAuth 2.0
+- **Control de acceso**: Solo usuarios autorizados
+- **Roles de usuario**: Admin, estudiante
+
+### Sincronización de Datos
+- **GitHub Classroom**: Obtiene assignments y estudiantes
+- **Calificaciones**: Sincroniza puntuaciones
+- **Tiempo de resolución**: Calcula tiempo desde fork hasta completado
+- **Estado de fork**: Detecta si el estudiante hizo fork
+
+## Uso
+
+### Sincronización Manual
+```bash
+cd b4os-backend
+python sync-classroom.py
+```
+
+### Desarrollo
+```bash
+# Frontend
+cd b4os-frontend
+npm run dev
+
+# Backend (en otra terminal)
+cd b4os-backend
+python sync-classroom.py
+```
+
+## Monitoreo
+
+El dashboard muestra:
+- **Progreso individual** de cada estudiante
+- **Tiempo de resolución** de assignments
+- **Actividad reciente** en GitHub
+- **Estadísticas comparativas**
+
+## 🤝 Contribución
+
+1. Fork el proyecto
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
+
+## Licencia
+
+Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
+
+## 👥 Equipo
+
+- **Programa**: Bitcoin 4 Open Source (B4OS)
+
+## 📞 Soporte
+
+Para soporte, contacta a [kleysc](https://github.com/kleysc) o abre un issue en este repositorio.
 
 ---
 
-Built with ❤️ for the Bitcoin community# Force deploy
+**B4OS Master Dashboard** - Monitoreo inteligente para el programa Bitcoin 4 Open Source

@@ -1,0 +1,198 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { Filter, SortAsc, SortDesc, RotateCcw, Search } from 'lucide-react'
+
+interface DashboardFiltersProps {
+  onFiltersChange: (filters: FilterState) => void
+  totalStudents: number
+  filteredCount: number
+}
+
+export interface FilterState {
+  sortBy: 'resolution_time' | 'percentage' | 'username' | 'assignments'
+  sortOrder: 'asc' | 'desc'
+  showOnly: 'all' | 'completed' | 'partial' | 'incomplete'
+  timeRange: { min: number; max: number }
+  percentageRange: { min: number; max: number }
+  searchTerm: string
+  showColumns: {
+    resolutionTime: boolean
+    percentage: boolean
+    assignments: boolean
+    score: boolean
+  }
+}
+
+const defaultFilters: FilterState = {
+  sortBy: 'username',
+  sortOrder: 'asc',
+  showOnly: 'all',
+  timeRange: { min: 0, max: 200 },
+  percentageRange: { min: 0, max: 100 },
+  searchTerm: '',
+  showColumns: {
+    resolutionTime: true,
+    percentage: true,
+    assignments: true,
+    score: true
+  }
+}
+
+export default function DashboardFilters({ onFiltersChange, totalStudents, filteredCount }: DashboardFiltersProps) {
+  const [filters, setFilters] = useState<FilterState>(defaultFilters)
+  const [isExpanded, setIsExpanded] = useState(false)
+
+  useEffect(() => {
+    onFiltersChange(filters)
+  }, [filters, onFiltersChange])
+
+  const handleSortChange = (sortBy: FilterState['sortBy']) => {
+    setFilters(prev => ({
+      ...prev,
+      sortBy,
+      sortOrder: prev.sortBy === sortBy && prev.sortOrder === 'asc' ? 'desc' : 'asc'
+    }))
+  }
+
+  const handleShowOnlyChange = (showOnly: FilterState['showOnly']) => {
+    setFilters(prev => ({ ...prev, showOnly }))
+  }
+
+  const handleSearchChange = (searchTerm: string) => {
+    setFilters(prev => ({ ...prev, searchTerm }))
+  }
+
+  const resetFilters = () => {
+    setFilters(defaultFilters)
+  }
+
+  const getSortIcon = (field: FilterState['sortBy']) => {
+    if (filters.sortBy !== field) return null
+    return filters.sortOrder === 'asc' ? 
+      <SortAsc className="w-4 h-4" /> : 
+      <SortDesc className="w-4 h-4" />
+  }
+
+  const getShowOnlyLabel = (type: FilterState['showOnly']) => {
+    const labels = {
+      all: 'Todos los estudiantes',
+      completed: 'Completados (100%)',
+      partial: 'En progreso (1-99%)',
+      incomplete: 'Sin comenzar (0%)'
+    }
+    return labels[type]
+  }
+
+  return (
+    <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Filter className="w-5 h-5 text-gray-600" />
+          <h3 className="font-semibold text-gray-900">Filtros Inteligentes</h3>
+          <span className="text-sm text-gray-500">
+            Mostrando {filteredCount} de {totalStudents} estudiantes
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={resetFilters}
+            className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors flex items-center gap-1"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Resetear
+          </button>
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="px-3 py-1 text-sm bg-orange-500 text-white hover:bg-orange-600 rounded-md transition-colors"
+          >
+            {isExpanded ? 'Ocultar' : 'Mostrar'} Filtros
+          </button>
+        </div>
+      </div>
+
+      {isExpanded && (
+        <div className="space-y-6">
+          {/* Búsqueda */}
+          <div>
+            <h4 className="font-medium text-gray-900 mb-3">Buscar estudiante por nombre:</h4>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-800" />
+              <input
+                type="text"
+                placeholder="Escribir nombre de usuario..."
+                value={filters.searchTerm}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-800"
+              />
+            </div>
+          </div>
+
+          {/* Ordenamiento */}
+          <div>
+            <h4 className="font-medium text-gray-900 mb-3">Ordenar por:</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              {[
+                { key: 'resolution_time', label: 'Tiempo de Resolución', desc: 'Más rápido primero' },
+                { key: 'percentage', label: 'Porcentaje', desc: 'Mayor puntaje primero' },
+                { key: 'assignments', label: 'Assignments', desc: 'Más completados primero' }
+              ].map(({ key, label, desc }) => (
+                <button
+                  key={key}
+                  onClick={() => handleSortChange(key as FilterState['sortBy'])}
+                  className={`px-3 py-2 text-sm rounded-md border transition-colors flex flex-col items-center justify-center gap-1 ${
+                    filters.sortBy === key
+                      ? 'bg-orange-50 border-orange-200 text-orange-700'
+                      : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
+                  }`}
+                  title={`${desc} ${filters.sortBy === key ? (filters.sortOrder === 'asc' ? '(Ascendente)' : '(Descendente)') : ''}`}
+                >
+                  <div className="flex items-center gap-1">
+                    {label}
+                    {getSortIcon(key as FilterState['sortBy'])}
+                  </div>
+                  <div className="text-xs text-gray-500 text-center leading-tight">
+                    {filters.sortBy === key && (
+                      <span className="font-medium">
+                        {filters.sortOrder === 'asc' 
+                          ? (key === 'resolution_time' ? 'Más rápido primero' : 
+                             key === 'percentage' ? 'Menor puntaje primero' :
+                             'Menos completados primero')
+                          : (key === 'resolution_time' ? 'Más lento primero' : 
+                             key === 'percentage' ? 'Mayor puntaje primero' :
+                             'Más completados primero')
+                        }
+                      </span>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Filtros de Estado */}
+          <div>
+            <h4 className="font-medium text-gray-900 mb-3">Filtrar por estado de progreso:</h4>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              {(['all', 'completed', 'partial', 'incomplete'] as const).map(type => (
+                <button
+                  key={type}
+                  onClick={() => handleShowOnlyChange(type)}
+                  className={`px-3 py-2 text-sm rounded-md border transition-colors ${
+                    filters.showOnly === type
+                      ? 'bg-blue-50 border-blue-200 text-blue-700'
+                      : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  {getShowOnlyLabel(type)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+        </div>
+      )}
+    </div>
+  )
+}
