@@ -224,7 +224,7 @@ export default function GradesBreakdown({ username, isExpanded, onOpenActions, o
                 <div className="mt-2 flex items-center justify-between">
                   <div className="text-xs text-gray-600">
                     {grade.percentage === null || grade.percentage === 0 ? (
-                      <span className="text-gray-500">Sin calificar</span>
+                      <span className="text-gray-500">Sin PoW</span>
                     ) : grade.percentage >= 80 ? (
                       <span className="text-green-600 font-medium">Excelente</span>
                     ) : grade.percentage >= 60 ? (
@@ -242,16 +242,24 @@ export default function GradesBreakdown({ username, isExpanded, onOpenActions, o
                     {(reviewCounts.reviewers > 0 || reviewCounts.comments > 0) && (
                       <div className="flex items-center gap-1 text-xs text-gray-500">
                         {reviewCounts.reviewers > 0 && (
-                          <div className="flex items-center gap-0.5">
-                            <UserCheck className="w-3 h-3" />
-                            <span>{reviewCounts.reviewers}</span>
-                          </div>
+                          <button
+                            onClick={() => onOpenReview?.(username, grade.assignment_name)}
+                            className="flex items-center gap-0.5 hover:bg-green-50 hover:text-green-600 px-1 py-0.5 rounded transition-colors cursor-pointer group"
+                            title="Ver revisores y comentarios"
+                          >
+                            <UserCheck className="w-3 h-3 group-hover:text-green-600" />
+                            <span className="group-hover:text-green-600">{reviewCounts.reviewers}</span>
+                          </button>
                         )}
                         {reviewCounts.comments > 0 && (
-                          <div className="flex items-center gap-0.5">
-                            <MessageSquare className="w-3 h-3" />
-                            <span>{reviewCounts.comments}</span>
-                          </div>
+                          <button
+                            onClick={() => onOpenReview?.(username, grade.assignment_name)}
+                            className="flex items-center gap-0.5 hover:bg-blue-50 hover:text-blue-600 px-1 py-0.5 rounded transition-colors cursor-pointer group"
+                            title="Ver comentarios de revisión"
+                          >
+                            <MessageSquare className="w-3 h-3 group-hover:text-blue-600" />
+                            <span className="group-hover:text-blue-600">{reviewCounts.comments}</span>
+                          </button>
                         )}
                       </div>
                     )}

@@ -1107,18 +1107,12 @@ export default function Home() {
       </div>
 
       {/* GitHub Actions Modal */}
-      {selectedStudent && (
-        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white/95 backdrop-blur-md rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-white/20">
-            <GitHubActionsModal
-              isOpen={modalOpen}
-              onClose={closeActionsModal}
-              username={selectedStudent.username}
-              assignmentName={selectedStudent.assignmentName}
-            />
-          </div>
-        </div>
-      )}
+      <GitHubActionsModal
+        isOpen={modalOpen}
+        onClose={closeActionsModal}
+        username={selectedStudent?.username || ''}
+        assignmentName={selectedStudent?.assignmentName || ''}
+      />
 
       {/* Assignment Selector Modal */}
       {showAssignmentSelector && selectedStudentForAssignment && (
