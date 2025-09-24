@@ -12,6 +12,14 @@ interface ProtectedContentProps {
 
 export default function ProtectedContent({ children }: ProtectedContentProps) {
   const { data: session, status } = useSession()
+  
+  // Debug info
+  console.log("ProtectedContent render:", {
+    status,
+    hasSession: !!session,
+    isAuthorized: session?.user?.isAuthorized,
+    user: session?.user
+  });
 
   // Mostrar loading mientras se verifica la sesión
   if (status === "loading") {
