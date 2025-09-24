@@ -54,11 +54,11 @@ jobs:
       run: |
         gh extension install github/gh-classroom
     
-    - name: Authenticate GitHub CLI
+    - name: Verify GitHub CLI authentication
       env:
         GH_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
       run: |
-        echo "${{ secrets.PERSONAL_GITHUB_TOKEN }}" | gh auth login --with-token
+        gh auth status
     
     - name: Install Python dependencies
       run: |
@@ -73,6 +73,7 @@ jobs:
         SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
         SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
         CLASSROOM_NAME: ${{ inputs.classroom_name }}
         ASSIGNMENT_ID: ${{ inputs.assignment_id }}
         LOG_LEVEL: ${{ inputs.log_level }}
