@@ -32,6 +32,13 @@ export const authOptions = {
       // Solo verificar para GitHub OAuth
       if (account.provider === 'github') {
         try {
+          // Bypass para admin inicial en desarrollo
+          const initialAdmin = process.env.INITIAL_ADMIN_USERNAME
+          if (process.env.NODE_ENV === 'development' && profile.login === initialAdmin) {
+            logger.info(`Development bypass: Admin user ${profile.login} allowed`)
+            return true
+          }
+
           const githubId = parseInt(profile.id || '0')
           const authResult = await AuthorizationService.checkUserAuthorization(githubId)
 
@@ -44,6 +51,13 @@ export const authOptions = {
           return true
         } catch (error) {
           logger.error('Error checking user authorization during signIn:', error)
+
+          // En desarrollo, permitir admin inicial si hay error de DB
+          const initialAdmin = process.env.INITIAL_ADMIN_USERNAME
+          if (process.env.NODE_ENV === 'development' && profile.login === initialAdmin) {
+            logger.info(`Development bypass: Admin user ${profile.login} allowed due to DB error`)
+            return true
+          }
           return false
         }
       }
