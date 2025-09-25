@@ -281,6 +281,28 @@ export default function Home() {
           const scoreB = reviewStatusB?.averageQualityScore ?? 0;
           comparison = scoreA - scoreB;
           break;
+        case "review_status":
+          const statusA = reviewStatuses.get(a.github_username);
+          const statusB = reviewStatuses.get(b.github_username);
+          
+          // Orden de prioridad: completed > in_progress > pending > null
+          const getStatusPriority = (status: {
+            hasReviewer: boolean;
+            status: 'pending' | 'in_progress' | 'completed' | null;
+          } | undefined) => {
+            if (!status || !status.hasReviewer) return 0;
+            switch (status.status) {
+              case 'completed': return 4;
+              case 'in_progress': return 3;
+              case 'pending': return 2;
+              default: return 1;
+            }
+          };
+          
+          const priorityA = getStatusPriority(statusA);
+          const priorityB = getStatusPriority(statusB);
+          comparison = priorityA - priorityB;
+          break;
         default:
           // Por defecto, ordenar alfabéticamente
           comparison = a.github_username.localeCompare(b.github_username);
@@ -553,15 +575,23 @@ export default function Home() {
                       className="col-span-1 text-center cursor-pointer hover:bg-gray-100 rounded px-2 py-1 -mx-2 transition-colors flex items-center justify-center gap-1"
                       onClick={() => handleSort("quality_score")}
                     >
-                      Puntaje
+                      Code Quality
                       {sortConfig.key === "quality_score" && (
                         <span className="text-orange-500">
                           {sortConfig.direction === "asc" ? "↑" : "↓"}
                         </span>
                       )}
                     </div>
-                    <div className="col-span-1 text-center text-sm font-semibold text-gray-700">
+                    <div
+                      className="col-span-1 text-center cursor-pointer hover:bg-gray-100 rounded px-2 py-1 -mx-2 transition-colors flex items-center justify-center gap-1"
+                      onClick={() => handleSort("review_status")}
+                    >
                       Revisión
+                      {sortConfig.key === "review_status" && (
+                        <span className="text-orange-500">
+                          {sortConfig.direction === "asc" ? "↑" : "↓"}
+                        </span>
+                      )}
                     </div>
                   </div>
 
