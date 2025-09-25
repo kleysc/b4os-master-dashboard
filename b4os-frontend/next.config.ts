@@ -31,10 +31,8 @@ const nextConfig: NextConfig = {
   },
   // Configuración de imágenes para producción
   images: {
-    domains: ['avatars.githubusercontent.com'],
+    domains: ['avatars.githubusercontent.com', 'res.cloudinary.com'],
     formats: ['image/webp', 'image/avif'],
-    // Permitir imágenes locales sin optimización para manifest
-    unoptimized: process.env.NODE_ENV === 'production',
   },
 };
 

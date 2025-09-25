@@ -28,7 +28,7 @@ export default function SignIn() {
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-white rounded-lg p-2 mx-auto mb-4">
               <img 
-                src="/web-app-manifest-192x192.png" 
+                src="https://res.cloudinary.com/dkuwkpihs/image/upload/v1758759628/web-app-manifest-192x192_dkecn9.png" 
                 alt="B4OS Logo" 
                 width={64}
                 height={64}

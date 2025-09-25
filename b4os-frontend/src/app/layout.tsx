@@ -18,11 +18,11 @@ export const metadata: Metadata = {
   description: "Learn Bitcoin and Lightning Network development through interactive coding challenges",
   icons: {
     icon: [
-      { url: "/web-app-manifest-192x192.png", sizes: "192x192", type: "image/png" },
-      { url: "/web-app-manifest-512x512.png", sizes: "512x512", type: "image/png" },
+      { url: "https://res.cloudinary.com/dkuwkpihs/image/upload/v1758759628/web-app-manifest-192x192_dkecn9.png", sizes: "192x192", type: "image/png" },
+      { url: "https://res.cloudinary.com/dkuwkpihs/image/upload/v1758759628/web-app-manifest-192x192_dkecn9.png", sizes: "512x512", type: "image/png" },
     ],
-    shortcut: "/web-app-manifest-192x192.png",
-    apple: "/web-app-manifest-512x512.png",
+    shortcut: "https://res.cloudinary.com/dkuwkpihs/image/upload/v1758759628/web-app-manifest-192x192_dkecn9.png",
+    apple: "https://res.cloudinary.com/dkuwkpihs/image/upload/v1758759628/web-app-manifest-192x192_dkecn9.png",
   },
 };
 
