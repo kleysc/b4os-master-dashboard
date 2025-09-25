@@ -39,24 +39,39 @@ jobs:
       run: |
         echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
     
+    - name: Set up environment
+      run: |
+        cd b4os-backend
+        # Create logs directory
+        mkdir -p ../logs
+        # Copy environment template if .env.local doesn't exist
+        if [ ! -f .env.local ]; then
+          cp env.example .env.local
+          echo "Created .env.local from template"
+        fi
+    
     - name: Install Python dependencies
       run: |
+        cd b4os-backend
         python -m pip install --upgrade pip
-        pip install pandas python-dotenv supabase
+        pip install -r requirements.txt
     
     - name: Run sync script
       env:
         SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
         SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-        CLASSROOM_NAME: ${{ inputs.classroom_name || 'B4OS-Dev' }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        CLASSROOM_NAME: ${{ inputs.classroom_name || 'B4OS-Dev-2025' }}
         ASSIGNMENT_ID: ${{ inputs.assignment_id || '' }}
         LOG_LEVEL: INFO
       run: |
+        cd b4os-backend
         python sync-classroom.py
     
     - name: Upload logs on failure
       if: failure()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: sync-logs
+        name: sync-logs-${{ github.run_number }}
         path: logs/
+        retention-days: 7
