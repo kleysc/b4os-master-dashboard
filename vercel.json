@@ -1,10 +1,6 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "b4os-frontend/package.json",
-      "use": "@vercel/next"
-    }
-  ],
-  "outputDirectory": "b4os-frontend/.next"
+  "buildCommand": "cd b4os-frontend && npm run build",
+  "outputDirectory": "b4os-frontend/.next",
+  "installCommand": "cd b4os-frontend && npm install"
 }
