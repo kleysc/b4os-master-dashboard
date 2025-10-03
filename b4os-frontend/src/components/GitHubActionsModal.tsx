@@ -1,6 +1,7 @@
 'use client'
 
 import { X, ExternalLink, Clock, WorkflowIcon } from 'lucide-react'
+import { useTranslation } from '@/hooks/useTranslation'
 
 interface GitHubActionsModalProps {
   isOpen: boolean
@@ -15,7 +16,7 @@ export default function GitHubActionsModal({
   username, 
   assignmentName 
 }: GitHubActionsModalProps) {
-
+  const { t } = useTranslation()
   const repoName = `${assignmentName}-${username}`
   const repoUrl = `https://github.com/B4OS-Dev/${repoName}`
   const actionsUrl = `https://github.com/B4OS-Dev/${repoName}/actions`
@@ -32,7 +33,7 @@ export default function GitHubActionsModal({
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">GitHub Actions</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{t('github_actions_modal.title')}</h2>
             <p className="text-sm text-gray-500">@{username}</p>
             <p className="text-xs text-gray-400">{assignmentName}</p>
           </div>
@@ -49,7 +50,7 @@ export default function GitHubActionsModal({
           <div className="p-4 bg-gray-50 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-sm font-medium text-gray-700">Repository</span>
+                <span className='text-sm font-medium text-gray-700'>{t('github_actions_modal.repository')}</span>
                 <p className="text-sm text-gray-600 mt-1">B4OS-Dev/{repoName}</p>
               </div>
               <a
@@ -57,7 +58,7 @@ export default function GitHubActionsModal({
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
-                title="Abrir repositorio"
+                title={t('github_actions_modal.open_repository')}
               >
                 <ExternalLink className="w-4 h-4" />
               </a>
@@ -69,16 +70,16 @@ export default function GitHubActionsModal({
             <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <WorkflowIcon className="w-8 h-8 text-orange-600" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">GitHub Actions</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('github_actions_modal.title')}</h3>
             <p className="text-sm text-gray-600 mb-6">
-              Ver las ejecuciones de CI/CD para este assignment
+              {t('github_actions_modal.description')}
             </p>
             <button
               onClick={() => window.open(actionsUrl, '_blank')}
               className="w-full px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium flex items-center justify-center gap-2"
             >
               <WorkflowIcon className="w-4 h-4" />
-              Ver GitHub Actions
+              {t('github_actions_modal.view_actions_button')}
             </button>
           </div>
         </div>

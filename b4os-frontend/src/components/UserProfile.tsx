@@ -7,8 +7,11 @@ import Image from 'next/image'
 import { createPortal } from 'react-dom'
 import { getRoleDisplayName, isAdmin } from '@/lib/github-roles'
 import { logger } from '@/lib/logger'
+import LanguageSelector from './LanguageSelector'
+import { useTranslation } from '@/hooks/useTranslation'
 
 export default function UserProfile() {
+  const { t } = useTranslation()
   const { data: session, status } = useSession()
   const [isOpen, setIsOpen] = useState(false)
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 })
@@ -58,7 +61,7 @@ export default function UserProfile() {
         className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors"
       >
         <GithubIcon className="w-4 h-4" />
-        Sign In
+        {t('common.sign_in')}
       </button>
     )
   }
@@ -126,7 +129,7 @@ export default function UserProfile() {
               className="w-full flex items-center gap-2 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-gray-100 mt-1"
             >
               <LogOutIcon className="w-4 h-4" />
-              <span className="font-medium">Cerrar Sesión</span>
+              <span className="font-medium">{t('common.sign_out')}</span>
             </button>
           </div>
         </>,

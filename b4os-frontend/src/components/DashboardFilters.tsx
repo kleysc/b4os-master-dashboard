@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Filter, SortAsc, SortDesc, RotateCcw, Search } from 'lucide-react'
+import { useTranslation } from '@/hooks/useTranslation'
 
 interface DashboardFiltersProps {
   onFiltersChange: (filters: FilterState) => void
@@ -40,6 +41,7 @@ const defaultFilters: FilterState = {
 }
 
 export default function DashboardFilters({ onFiltersChange, totalStudents, filteredCount }: DashboardFiltersProps) {
+  const { t } = useTranslation()
   const [filters, setFilters] = useState<FilterState>(defaultFilters)
   const [isExpanded, setIsExpanded] = useState(false)
 
@@ -76,10 +78,10 @@ export default function DashboardFilters({ onFiltersChange, totalStudents, filte
 
   const getShowOnlyLabel = (type: FilterState['showOnly']) => {
     const labels = {
-      all: 'Todos los estudiantes',
-      completed: 'Completados (100%)',
-      partial: 'En progreso (1-99%)',
-      incomplete: 'Sin comenzar (0%)'
+      all: t('filters.status_options.all'),
+      completed: t('filters.status_options.completed'),
+      partial: t('filters.status_options.partial'),
+      incomplete: t('filters.status_options.incomplete')
     }
     return labels[type]
   }
@@ -90,9 +92,9 @@ export default function DashboardFilters({ onFiltersChange, totalStudents, filte
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Filter className="w-5 h-5 text-gray-600" />
-          <h3 className="font-semibold text-gray-900">Filtros Inteligentes</h3>
+          <h3 className="font-semibold text-gray-900">{t('filters.title')}</h3>
           <span className="text-sm text-gray-500">
-            Mostrando {filteredCount} de {totalStudents} estudiantes
+            {t('dashboard.showing').replace('{filteredCount}', filteredCount.toString()).replace('{totalStudents}', totalStudents.toString())}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -100,14 +102,14 @@ export default function DashboardFilters({ onFiltersChange, totalStudents, filte
             onClick={resetFilters}
             className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors flex items-center gap-1"
           >
-            <RotateCcw className="w-4 h-4" />
-            Resetear
+            <RotateCcw className='w-4 h-4' />
+            {t('filters.reset_filters')}
           </button>
           <button
             onClick={() => setIsExpanded(!isExpanded)}
             className="px-3 py-1 text-sm bg-orange-500 text-white hover:bg-orange-600 rounded-md transition-colors"
           >
-            {isExpanded ? 'Ocultar' : 'Mostrar'} Filtros
+            {isExpanded ? t('filters.hide_filters') : t('filters.show_filters')}
           </button>
         </div>
       </div>
@@ -116,12 +118,12 @@ export default function DashboardFilters({ onFiltersChange, totalStudents, filte
         <div className="space-y-6">
           {/* Búsqueda */}
           <div>
-            <h4 className="font-medium text-gray-900 mb-3">Buscar estudiante por nombre:</h4>
+            <h4 className="font-medium text-gray-900 mb-3">{t('filters.search_label')}</h4>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-800" />
               <input
                 type="text"
-                placeholder="Escribir nombre de usuario..."
+                placeholder={t('filters.search_placeholder')}
                 value={filters.searchTerm}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-800"
@@ -131,12 +133,12 @@ export default function DashboardFilters({ onFiltersChange, totalStudents, filte
 
           {/* Ordenamiento */}
           <div>
-            <h4 className="font-medium text-gray-900 mb-3">Ordenar por:</h4>
+            <h4 className="font-medium text-gray-900 mb-3">{t('filters.sort_by')}</h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
               {[
-                { key: 'resolution_time', label: 'Tiempo de Resolución', desc: 'Más rápido primero' },
-                { key: 'percentage', label: 'Porcentaje', desc: 'Mayor puntaje primero' },
-                { key: 'assignments', label: 'Assignments', desc: 'Más completados primero' }
+                { key: 'resolution_time', label: t('filters.sort_options.resolution_time.label'), desc: t('filters.sort_options.resolution_time.description') },
+                { key: 'percentage', label: t('filters.sort_options.percentage.label'), desc: t('filters.sort_options.percentage.description') },
+                { key: 'assignments', label: t('filters.sort_options.assignments.label'), desc: t('filters.sort_options.assignments.description') }
               ].map(({ key, label, desc }) => (
                 <button
                   key={key}
@@ -173,7 +175,7 @@ export default function DashboardFilters({ onFiltersChange, totalStudents, filte
 
           {/* Filtros de Estado */}
           <div>
-            <h4 className="font-medium text-gray-900 mb-3">Filtrar por estado de progreso:</h4>
+            <h4 className="font-medium text-gray-900 mb-3">{t('filters.filter_by_status')}</h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {(['all', 'completed', 'partial', 'incomplete'] as const).map(type => (
                 <button
