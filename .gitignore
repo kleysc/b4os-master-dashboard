@@ -201,3 +201,4 @@ temp/
 i18n.cache
 
 # Generated translation files (keeping public/i18n for deployment)
+*.tsbuildinfo
