@@ -4,7 +4,9 @@ import { useEffect, useState, useCallback } from "react";
 import { SupabaseService, type Assignment } from "@/lib/supabase";
 import type { StudentReviewer } from "@/lib/supabase";
 import UserProfile from "@/components/UserProfile";
+import LanguageSelector from "@/components/LanguageSelector";
 import ProtectedContent from "@/components/ProtectedContent";
+import { useTranslation } from '@/hooks/useTranslation';
 import GitHubTooltip from "@/components/GitHubTooltip";
 import {
   UsersIcon,
@@ -25,6 +27,7 @@ import DashboardFilters, { FilterState } from "@/components/DashboardFilters";
 import ReviewSystem from "@/components/ReviewSystem";
 
 export default function Home() {
+  const { t } = useTranslation()
   const [stats, setStats] = useState<{
     totalStudents?: number;
     totalAssignments?: number;
@@ -498,14 +501,15 @@ export default function Home() {
                   </div>
                   <div>
                     <h1 className="text-2xl font-bold text-white">
-                      B4OS Dashboard
+                      {t('dashboard.title')}
                     </h1>
                     <p className="text-orange-300 text-sm font-medium">
-                      Programa Bitcoin 4 Open Source
+                      {t('dashboard.subtitle')}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
+                  <LanguageSelector />
                   <UserProfile />
                 </div>
               </div>
@@ -524,7 +528,7 @@ export default function Home() {
               <div className="text-3xl font-bold text-white mb-2">
                 {stats.totalStudents || 0}
               </div>
-              <div className="text-gray-300">Estudiantes</div>
+              <div className="text-gray-300">{t('dashboard.stats.students')}</div>
             </div>
             <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 text-center border border-white/10 hover:border-orange-500/50 transition-colors">
               <div className="flex justify-center mb-3">
@@ -533,7 +537,7 @@ export default function Home() {
               <div className="text-3xl font-bold text-white mb-2">
                 {stats.totalAssignments || 0}
               </div>
-              <div className="text-gray-300">Assignments</div>
+              <div className="text-gray-300">{t('dashboard.stats.assignments')}</div>
             </div>
             <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 text-center border border-white/10 hover:border-orange-500/50 transition-colors">
               <div className="flex justify-center mb-3">
@@ -542,7 +546,7 @@ export default function Home() {
               <div className="text-3xl font-bold text-white mb-2">
                 {stats.avgScore || 0}%
               </div>
-              <div className="text-gray-300">Puntuación Promedio</div>
+              <div className="text-gray-300">{t('dashboard.stats.average_score')}</div>
             </div>
             <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 text-center border border-white/10 hover:border-orange-500/50 transition-colors">
               <div className="flex justify-center mb-3">
@@ -551,7 +555,7 @@ export default function Home() {
               <div className="text-3xl font-bold text-white mb-2">
                 {stats.completionRate || 0}%
               </div>
-              <div className="text-gray-300">Tasa de Finalización</div>
+              <div className="text-gray-300">{t('dashboard.stats.completion_rate')}</div>
             </div>
           </div>
         </section>
@@ -572,7 +576,7 @@ export default function Home() {
               <div className="flex items-center gap-3">
                 <TrophyIcon className="w-6 h-6 text-orange-500" />
                 <h3 className="text-2xl font-bold text-gray-900">
-                  Ranking de Estudiantes
+                  {t('leaderboard.title')}
                 </h3>
               </div>
               <div className="flex items-center gap-2 px-4 py-2 bg-orange-100 text-orange-700 rounded-full text-sm font-medium">
@@ -580,22 +584,21 @@ export default function Home() {
                 {filteredStudents.length > 0
                   ? filteredStudents.length
                   : leaderboard.length}{" "}
-                estudiantes
+                {t('leaderboard.columns.students')}
               </div>
             </div>
 
             {isLoading ? (
               <div className="text-center py-12">
                 <RefreshCwIcon className="w-8 h-8 animate-spin text-orange-500 mx-auto mb-4" />
-                <p className="text-gray-600">Cargando datos...</p>
+                <p className="text-gray-600">{t('common.loading')}</p>
               </div>
             ) : (filteredStudents.length > 0 ? filteredStudents : leaderboard).length === 0 ? (
               <div className="text-center py-12">
                 <TrophyIcon className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-600">No hay datos disponibles</p>
+                <p className="text-gray-600">{t('common.no_data')}</p>
                 <p className="text-sm text-gray-500">
-                  Los datos aparecerán cuando se sincronicen desde GitHub
-                  Classroom
+                  {t('dashboard.no_data_description')}
                 </p>
               </div>
             ) : (
@@ -609,7 +612,7 @@ export default function Home() {
                       className="col-span-3 text-left cursor-pointer hover:bg-gray-100 rounded px-2 py-1 -mx-2 transition-colors flex items-center gap-1"
                       onClick={() => handleSort("username")}
                     >
-                      Estudiantes
+                      {t('leaderboard.columns.students')}
                       {sortConfig.key === "username" && (
                         <span className="text-orange-500">
                           {sortConfig.direction === "asc" ? "↑" : "↓"}
@@ -620,7 +623,7 @@ export default function Home() {
                       className="col-span-2 text-center cursor-pointer hover:bg-gray-100 rounded px-2 py-1 -mx-2 transition-colors flex items-center justify-center gap-1"
                       onClick={() => handleSort("assignments")}
                     >
-                      Assignments
+                      {t('leaderboard.columns.assignments')}
                       {sortConfig.key === "assignments" && (
                         <span className="text-orange-500">
                           {sortConfig.direction === "asc" ? "↑" : "↓"}
@@ -631,7 +634,7 @@ export default function Home() {
                       className="col-span-2 text-center cursor-pointer hover:bg-gray-100 rounded px-2 py-1 -mx-2 transition-colors flex items-center justify-center gap-1"
                       onClick={() => handleSort("resolution_time")}
                     >
-                      Tiempo de Resolución
+                      {t('leaderboard.columns.resolution_time')}
                       {sortConfig.key === "resolution_time" && (
                         <span className="text-orange-500">
                           {sortConfig.direction === "asc" ? "↑" : "↓"}
@@ -642,7 +645,7 @@ export default function Home() {
                       className="col-span-2 text-center cursor-pointer hover:bg-gray-100 rounded px-2 py-1 -mx-2 transition-colors flex items-center justify-center gap-1"
                       onClick={() => handleSort("total_score")}
                     >
-                      Puntos
+                      {t('leaderboard.columns.points')}
                       {sortConfig.key === "total_score" && (
                         <span className="text-orange-500">
                           {sortConfig.direction === "asc" ? "↑" : "↓"}
@@ -653,7 +656,7 @@ export default function Home() {
                       className="col-span-1 text-center cursor-pointer hover:bg-gray-100 rounded px-2 py-1 -mx-2 transition-colors flex items-center justify-center gap-1"
                       onClick={() => handleSort("percentage")}
                     >
-                      Porcentaje
+                      {t('leaderboard.columns.percentage')}
                       {sortConfig.key === "percentage" && (
                         <span className="text-orange-500">
                           {sortConfig.direction === "asc" ? "↑" : "↓"}
@@ -663,9 +666,9 @@ export default function Home() {
                     <div
                       className="col-span-1 text-center cursor-pointer hover:bg-gray-100 rounded px-2 py-1 -mx-2 transition-colors flex items-center justify-center gap-1"
                       onClick={() => handleSort("quality_score")}
-                      title="Promedio de calidad de código (basado en todas las evaluaciones)"
+                      title={t('leaderboard.columns.quality_score_tooltip')}
                     >
-                      Code Quality
+                      {t('leaderboard.columns.quality_score')}
                       {sortConfig.key === "quality_score" && (
                         <span className="text-orange-500">
                           {sortConfig.direction === "asc" ? "↑" : "↓"}
@@ -676,7 +679,7 @@ export default function Home() {
                       className="col-span-1 text-center cursor-pointer hover:bg-gray-100 rounded px-2 py-1 -mx-2 transition-colors flex items-center justify-center gap-1"
                       onClick={() => handleSort("review_status")}
                     >
-                      Revisión
+                      {t('leaderboard.columns.review_status')}
                       {sortConfig.key === "review_status" && (
                         <span className="text-orange-500">
                           {sortConfig.direction === "asc" ? "↑" : "↓"}
@@ -755,26 +758,26 @@ export default function Home() {
                                   {student.total_score > 0 ? (
                                     <div 
                                       className="flex items-center gap-1 px-2 py-0.5 text-green-700 rounded-full text-xs font-medium cursor-help group relative"
-                                      title="Usuario Activo - Tiene calificaciones en assignments"
+                                      title={t('leaderboard.status.active_description')}
                                     >
                                       <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                                       {/* Tooltip */}
                                       <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-4 py-3 bg-white text-gray-900 text-sm rounded-lg shadow-lg border border-gray-200 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 min-w-48">
-                                        <div className="text-sm font-medium text-gray-900">Usuario Activo</div>
-                                        <div className="text-xs text-gray-600 mt-1">Tiene calificaciones en assignments</div>
+                                        <div className="text-sm font-medium text-gray-900">{t('leaderboard.status.active_user')}</div>
+                                        <div className="text-xs text-gray-600 mt-1">{t('leaderboard.status.active_description')}</div>
                                         <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-white"></div>
                                       </div>
                                     </div>
                                   ) : (
                                     <div 
                                       className="flex items-center gap-1 px-2 py-0.5 text-gray-600 rounded-full text-xs font-medium cursor-help group relative"
-                                      title="Usuario Inactivo - No tiene calificaciones en assignments"
+                                      title={t('leaderboard.status.inactive_description')}
                                     >
                                       <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
                                       {/* Tooltip */}
                                       <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-4 py-3 bg-white text-gray-900 text-sm rounded-lg shadow-lg border border-gray-200 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 min-w-48">
-                                        <div className="text-sm font-medium text-gray-900">Usuario Inactivo</div>
-                                        <div className="text-xs text-gray-600 mt-1">No tiene calificaciones en assignments</div>
+                                        <div className="text-sm font-medium text-gray-900">{t('leaderboard.status.inactive_user')}</div>
+                                        <div className="text-xs text-gray-600 mt-1">{t('leaderboard.status.inactive_description')}</div>
                                         <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-white"></div>
                                       </div>
                                     </div>
@@ -811,8 +814,8 @@ export default function Home() {
                                           expandedStudents.has(
                                             student.github_username
                                           )
-                                            ? "Ocultar desglose de calificaciones"
-                                            : "Ver desglose de calificaciones"
+                                            ? t('leaderboard.actions.hide_grades_breakdown')
+                                            : t('leaderboard.actions.show_grades_breakdown')
                                         }
                                       >
                                         {expandedStudents.has(
@@ -823,7 +826,7 @@ export default function Home() {
                                           <ChevronDown className="w-3 h-3 text-gray-500 group-hover:text-blue-600" />
                                         )}
                                         <span className="text-gray-500 group-hover:text-blue-600">
-                                          Ver progreso
+                                          {t('leaderboard.actions.view_progress')}
                                         </span>
                                       </button>
                                       <button
@@ -833,10 +836,10 @@ export default function Home() {
                                           )
                                         }
                                         className="px-3 py-1 bg-gray-50 hover:bg-green-50 border border-gray-200 hover:border-green-200 rounded-full flex items-center gap-1 cursor-pointer transition-colors group text-xs"
-                                        title="Revisar trabajo del estudiante"
+                                        title={t('leaderboard.actions.review_student_work')}
                                       >
                                         <span className="text-gray-500 group-hover:text-green-600">
-                                          Revisar
+                                          {t('common.review')}
                                         </span>
                                       </button>
                                     </div>
@@ -942,7 +945,7 @@ export default function Home() {
                                     </span>
                                     {reviewStatus.qualityScoreCount > 1 && (
                                       <span className="text-xs text-gray-500">
-                                        ({reviewStatus.qualityScoreCount} eval.)
+                                        ({reviewStatus.qualityScoreCount} {t('leaderboard.evaluations')})
                                       </span>
                                     )}
                                   </div>
@@ -957,7 +960,7 @@ export default function Home() {
                                 if (!reviewStatus || !reviewStatus.hasReviewer) {
                                   return (
                                     <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
-                                      Sin revisor
+                                      {t('leaderboard.status.no_reviewer')}
                                     </span>
                                   );
                                 }
@@ -1000,7 +1003,7 @@ export default function Home() {
                                     )}
                                     {reviewStatus.reviewerCount > 1 && (
                                       <span className="text-xs text-gray-500">
-                                        +{reviewStatus.reviewerCount - 1} más
+                                        +{reviewStatus.reviewerCount - 1} {t('leaderboard.more_reviewers')}
                                       </span>
                                     )}
                                   </div>
@@ -1051,28 +1054,28 @@ export default function Home() {
                                      {student.total_score > 0 ? (
                                        <div 
                                          className="flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-medium cursor-help group relative"
-                                         title="Usuario Activo - Tiene calificaciones en assignments"
+                                         title={t('leaderboard.status.active_description')}
                                        >
                                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                         Activo
+                                         {t('leaderboard.status.active')}
                                          {/* Tooltip */}
                                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-4 py-3 bg-white text-gray-900 text-sm rounded-lg shadow-lg border border-gray-200 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 min-w-48">
-                                           <div className="text-sm font-medium text-gray-900">Usuario Activo</div>
-                                           <div className="text-xs text-gray-600 mt-1">Tiene calificaciones en assignments</div>
+                                           <div className="text-sm font-medium text-gray-900">{t('leaderboard.status.active_user')}</div>
+                                           <div className="text-xs text-gray-600 mt-1">{t('leaderboard.status.active_description')}</div>
                                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-white"></div>
                                          </div>
                                        </div>
                                      ) : (
                                        <div 
                                          className="flex items-center gap-1 px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs font-medium cursor-help group relative"
-                                         title="Usuario Inactivo - No tiene calificaciones en assignments"
+                                         title={t('leaderboard.status.inactive_description')}
                                        >
                                          <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                                         Inactivo
+                                         {t('leaderboard.status.inactive')}
                                          {/* Tooltip */}
                                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-4 py-3 bg-white text-gray-900 text-sm rounded-lg shadow-lg border border-gray-200 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50 min-w-48">
-                                           <div className="text-sm font-medium text-gray-900">Usuario Inactivo</div>
-                                           <div className="text-xs text-gray-600 mt-1">No tiene calificaciones en assignments</div>
+                                           <div className="text-sm font-medium text-gray-900">{t('leaderboard.status.inactive_user')}</div>
+                                           <div className="text-xs text-gray-600 mt-1">{t('leaderboard.status.inactive_description')}</div>
                                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-white"></div>
                                          </div>
                                        </div>
@@ -1108,8 +1111,8 @@ export default function Home() {
                                         expandedStudents.has(
                                           student.github_username
                                         )
-                                          ? "Ocultar desglose de calificaciones"
-                                          : "Ver desglose de calificaciones"
+                                          ? t('leaderboard.actions.hide_grades_breakdown')
+                                          : t('leaderboard.actions.show_grades_breakdown')
                                       }
                                     >
                                       {expandedStudents.has(
@@ -1120,21 +1123,21 @@ export default function Home() {
                                         <ChevronDown className="w-4 h-4 text-gray-500 group-hover:text-blue-600" />
                                       )}
                                       <span className="text-gray-500 group-hover:text-blue-600">
-                                        Ver progreso
+                                        {t('leaderboard.actions.view_progress')}
                                       </span>
                                     </button>
                                     <button
                                       onClick={() =>
                                         openActionsModal(
                                           student.github_username,
-                                          assignments[0]?.name || "assignment"
+                                          assignments[0]?.name || t('common.assignments')
                                         )
                                       }
                                       className="px-3 py-1 bg-gray-50 hover:bg-orange-50 border border-gray-200 hover:border-orange-200 rounded-full flex items-center gap-1 cursor-pointer transition-colors group text-sm"
-                                      title="Ver ejecuciones de GitHub Actions"
+                                      title={t('leaderboard.actions.view_github_actions')}
                                     >
                                       <span className="text-gray-500 group-hover:text-orange-600">
-                                        Actions
+                                        {t('leaderboard.actions.view_actions')}
                                       </span>
                                     </button>
                                     <button
@@ -1144,10 +1147,10 @@ export default function Home() {
                                         )
                                       }
                                       className="px-3 py-1 bg-gray-50 hover:bg-green-50 border border-gray-200 hover:border-green-200 rounded-full flex items-center gap-1 cursor-pointer transition-colors group text-sm"
-                                      title="Revisar trabajo del estudiante"
+                                      title={t('leaderboard.actions.review_student_work')}
                                     >
                                       <span className="text-gray-500 group-hover:text-green-600">
-                                        Revisar
+                                        {t('common.review')}
                                       </span>
                                     </button>
                                   </div>
@@ -1195,11 +1198,11 @@ export default function Home() {
                               <div className="flex justify-between text-sm text-gray-600">
                                 <span>
                                   {student.total_score || 0}/
-                                  {student.total_possible || 0} puntos
+                                  {student.total_possible || 0} {t('common.points')}
                                 </span>
                                 <span className="text-xs text-gray-400">
                                   {student.assignments_completed} de{" "}
-                                  {assignments.length} assignments
+                                  {assignments.length} {t('common.assignments')}
                                 </span>
                               </div>
                             </div>
@@ -1231,7 +1234,7 @@ export default function Home() {
             <div className="text-center">
               <p className="mb-2 font-medium">B4OS Dashboard</p>
               <p className="text-sm text-gray-400">
-                Monitoreo en tiempo real del programa Bitcoin 4 Open Source
+                {t('footer.description')}
               </p>
             </div>
           </div>
@@ -1253,7 +1256,7 @@ export default function Home() {
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  Seleccionar Assignment
+                  {t('assignment_selector.title')}
                 </h3>
                 <button
                   onClick={closeAssignmentSelector}
@@ -1265,7 +1268,7 @@ export default function Home() {
                 </button>
               </div>
               <p className="text-sm text-gray-600 mb-4">
-                Selecciona el assignment que quieres revisar para <strong>{selectedStudentForAssignment}</strong>:
+                {t('assignment_selector.description').replace('{username}', selectedStudentForAssignment || '')}
               </p>
               <div className="space-y-2">
                 {assignments.map((assignment) => (
@@ -1276,7 +1279,7 @@ export default function Home() {
                   >
                     <div className="font-medium text-gray-900">{assignment.name}</div>
                     <div className="text-sm text-gray-500">
-                      {assignment.points_available ? `${assignment.points_available} puntos` : 'Sin puntos asignados'}
+                      {assignment.points_available ? `${assignment.points_available} ${t('common.points')}` : t('assignment_selector.no_points')}
                     </div>
                   </button>
                 ))}

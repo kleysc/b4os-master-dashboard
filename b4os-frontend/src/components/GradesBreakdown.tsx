@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { CheckCircle, XCircle, Clock, Trophy, WorkflowIcon, UserCheck, MessageSquare } from 'lucide-react'
 import { SupabaseService } from '@/lib/supabase'
+import { useTranslation } from '@/hooks/useTranslation'
 
 interface GradesBreakdownProps {
   username: string
@@ -20,6 +21,7 @@ interface GradeBreakdown {
 }
 
 export default function GradesBreakdown({ username, isExpanded, onOpenActions, onOpenReview }: GradesBreakdownProps) {
+  const { t } = useTranslation()
   const [grades, setGrades] = useState<GradeBreakdown[]>([])
   const [reviewData, setReviewData] = useState<{[key: string]: {reviewers: unknown[], comments: unknown[]}}>({})
   const [isLoading, setIsLoading] = useState(false)
@@ -109,18 +111,18 @@ export default function GradesBreakdown({ username, isExpanded, onOpenActions, o
   const getReviewStatus = (assignmentName: string) => {
     const data = reviewData[assignmentName]
     if (!data || data.reviewers.length === 0) {
-      return { status: 'none', text: 'Sin revisor', color: 'text-gray-500' }
+      return { status: 'none', text: t('grades_breakdown.status.no_reviewer'), color: 'text-gray-500' }
     }
     
     const hasInProgress = data.reviewers.some((r: unknown) => (r as { status: string }).status === 'in_progress')
     const hasCompleted = data.reviewers.some((r: unknown) => (r as { status: string }).status === 'completed')
     
     if (hasCompleted) {
-      return { status: 'completed', text: 'Revisado', color: 'text-green-600' }
+      return { status: 'completed', text: t('grades_breakdown.status.reviewed'), color: 'text-green-600' }
     } else if (hasInProgress) {
-      return { status: 'in_progress', text: 'En revisión', color: 'text-amber-600' }
+      return { status: 'in_progress', text: t('grades_breakdown.status.in_review'), color: 'text-amber-600' }
     } else {
-      return { status: 'pending', text: 'Pendiente', color: 'text-blue-600' }
+      return { status: 'pending', text: t('grades_breakdown.status.pending'), color: 'text-blue-600' }
     }
   }
 
@@ -139,16 +141,16 @@ export default function GradesBreakdown({ username, isExpanded, onOpenActions, o
   return (
     <div className="bg-gray-50 border-t border-gray-200 p-4">
       <div className="flex items-center justify-between mb-4">
-        <h4 className="font-semibold text-gray-900">Desglose de Calificaciones</h4>
+        <h4 className="font-semibold text-gray-900">{t('grades_breakdown.title')}</h4>
         <div className="text-sm text-gray-500">
-          {grades.length} assignments
+          {t('grades_breakdown.assignments_count').replace('{count}', grades.length.toString())}
         </div>
       </div>
 
       {isLoading ? (
         <div className="text-center py-8">
           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-500 mx-auto mb-2"></div>
-          <p className="text-gray-600 text-sm">Cargando calificaciones...</p>
+          <p className="text-gray-600 text-sm">{t('grades_breakdown.loading_grades')}</p>
         </div>
       ) : error ? (
         <div className="text-center py-8">
@@ -158,13 +160,13 @@ export default function GradesBreakdown({ username, isExpanded, onOpenActions, o
             onClick={loadGradesBreakdown}
             className="px-3 py-1 bg-orange-500 text-white rounded text-sm hover:bg-orange-600 transition-colors"
           >
-            Reintentar
+            {t('grades_breakdown.retry_button')}
           </button>
         </div>
       ) : grades.length === 0 ? (
         <div className="text-center py-8">
           <Clock className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-          <p className="text-gray-600 text-sm">No hay calificaciones disponibles</p>
+          <p className="text-gray-600 text-sm">{t('grades_breakdown.no_grades')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
