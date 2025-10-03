@@ -1,0 +1,326 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "reset": "Reset",
+    "show": "Show",
+    "hide": "Hide",
+    "add": "Add",
+    "remove": "Remove",
+    "assign": "Assign",
+    "complete": "Complete",
+    "start": "Start",
+    "view": "View",
+    "review": "Review",
+    "actions": "Actions",
+    "progress": "Progress",
+    "status": "Status",
+    "score": "Score",
+    "points": "Points",
+    "percentage": "Percentage",
+    "time": "Time",
+    "date": "Date",
+    "name": "Name",
+    "username": "Username",
+    "email": "Email",
+    "description": "Description",
+    "type": "Type",
+    "priority": "Priority",
+    "quality": "Quality",
+    "comments": "Comments",
+    "reviews": "Reviews",
+    "assignments": "Assignments",
+    "students": "Students",
+    "active": "Active",
+    "inactive": "Inactive",
+    "completed": "Completed",
+    "incomplete": "Incomplete",
+    "pending": "Pending",
+    "in_progress": "In Progress",
+    "excellent": "Excellent",
+    "good": "Good",
+    "needs_improvement": "Needs Improvement",
+    "no_data": "No data available",
+    "no_reviewers": "No reviewers assigned",
+    "no_comments": "No comments",
+    "no_repositories": "No recent repositories",
+    "no_activity": "No activity in the last 30 days",
+    "loading_repositories": "Loading repositories...",
+    "loading_grades": "Loading grades...",
+    "verifying_auth": "Verifying authentication...",
+    "loading_data": "Loading data...",
+    "failed_to_load": "Could not load repositories",
+    "failed_to_load_grades": "Error loading grades",
+    "sign_in": "Sign In",
+    "sign_out": "Sign Out",
+    "continue_with": "Continue with",
+    "by_signing_in": "By signing in, you agree to participate in the B4OS technical assessment program.",
+    "agreement": "By signing in, you agree to participate in the B4OS technical assessment program."
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "leaderboard": "Student Ranking",
+    "filters": "Smart Filters",
+    "profile": "Profile",
+    "settings": "Settings"
+  },
+  "dashboard": {
+    "title": "B4OS Dashboard",
+    "subtitle": "Bitcoin 4 Open Source Program",
+    "description": "Access with your authorized GitHub account to view student rankings, program statistics and monitor progress in real time.",
+    "stats": {
+      "students": "Students",
+      "assignments": "Assignments",
+      "average_score": "Average Score",
+      "completion_rate": "Completion Rate"
+    },
+    "showing": "Showing {filteredCount} of {totalStudents} students",
+    "students_count": "{count} students",
+    "no_data_description": "Data will appear when synced from GitHub Classroom"
+  },
+  "filters": {
+    "title": "Smart Filters",
+    "search_placeholder": "Type username...",
+    "search_label": "Search student by name",
+    "sort_by": "Sort by:",
+    "filter_by_status": "Filter by progress status",
+    "show_filters": "Show Filters",
+    "hide_filters": "Hide Filters",
+    "reset_filters": "Reset",
+    "sort_options": {
+      "resolution_time": {
+        "label": "Resolution Time",
+        "description": "Fastest first",
+        "asc": "Fastest first",
+        "desc": "Slowest first"
+      },
+      "percentage": {
+        "label": "Percentage",
+        "description": "Highest score first",
+        "asc": "Lowest score first",
+        "desc": "Highest score first"
+      },
+      "assignments": {
+        "label": "Assignments",
+        "description": "Most completed first",
+        "asc": "Least completed first",
+        "desc": "Most completed first"
+      },
+      "username": {
+        "label": "Students",
+        "description": "Alphabetical order"
+      },
+      "total_score": {
+        "label": "Points",
+        "description": "Sort by points"
+      },
+      "quality_score": {
+        "label": "Code Quality",
+        "description": "Average code quality score (based on all evaluations)"
+      },
+      "review_status": {
+        "label": "Review",
+        "description": "Review status"
+      }
+    },
+    "status_options": {
+      "all": "All students",
+      "completed": "Completed (100%)",
+      "partial": "In progress (1-99%)",
+      "incomplete": "Not started (0%)"
+    }
+  },
+  "leaderboard": {
+    "title": "Student Ranking",
+    "columns": {
+      "students": "Students",
+      "assignments": "Assignments",
+      "resolution_time": "Resolution Time",
+      "points": "Points",
+      "percentage": "Percentage",
+      "quality_score": "Code Quality",
+      "review_status": "Review"
+    },
+    "actions": {
+      "view_progress": "View progress",
+      "review_work": "Review",
+      "view_actions": "Actions",
+      "view_github_profile": "View GitHub profile",
+      "view_assignments": "View assignments",
+      "view_github_actions": "View GitHub Actions runs",
+      "review_student_work": "Review student work",
+      "show_grades_breakdown": "View grades breakdown",
+      "hide_grades_breakdown": "Hide grades breakdown"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "active_user": "Active User",
+      "active_description": "Has grades in assignments",
+      "inactive_user": "Inactive User",
+      "inactive_description": "No grades in assignments",
+      "no_reviewer": "No reviewer",
+      "reviewed": "Reviewed",
+      "in_review": "In review",
+      "pending_review": "Pending"
+    },
+    "time_format": {
+      "days_hours": "{days}d {hours}h",
+      "not_available": "N/A"
+    },
+    "progress_labels": {
+      "excellent": "Excellent",
+      "good": "Good",
+      "needs_improvement": "Needs Improvement",
+      "no_pow": "No PoW"
+    },
+    "quality_score": {
+      "title": "Average code quality: {score}/10 based on {count} evaluation{plural}",
+      "evaluations": "({count} eval.)"
+    },
+    "review_info": {
+      "more_reviewers": "+{count} more"
+    },
+    "evaluations": "eval.",
+    "more_reviewers": "more"
+  },
+  "grades_breakdown": {
+    "title": "Grades Breakdown",
+    "assignments_count": "{count} assignments",
+    "loading_grades": "Loading grades...",
+    "no_grades": "No grades available",
+    "retry_button": "Retry",
+    "actions": {
+      "view_github_actions": "View GitHub Actions for this assignment",
+      "review_assignment": "Review this assignment",
+      "view_reviewers_comments": "View reviewers and comments",
+      "view_review_comments": "View review comments"
+    },
+    "status": {
+      "no_reviewer": "No reviewer",
+      "reviewed": "Reviewed",
+      "in_review": "In review",
+      "pending": "Pending"
+    },
+    "progress_labels": {
+      "excellent": "Excellent",
+      "good": "Good",
+      "needs_improvement": "Needs Improvement",
+      "no_pow": "No PoW"
+    }
+  },
+  "github_actions_modal": {
+    "title": "GitHub Actions",
+    "repository": "Repository",
+    "open_repository": "Open repository",
+    "description": "View CI/CD runs for this assignment",
+    "view_actions_button": "View GitHub Actions"
+  },
+  "github_tooltip": {
+    "collaboration_activity": "Collaboration Activity",
+    "recent_repositories": "Recent Repositories",
+    "recent_repos": "Recent Repositories",
+    "loading_repos": "Loading repositories...",
+    "error_loading_repos": "Could not load repositories",
+    "no_recent_repos": "No recent repositories",
+    "no_activity_30_days": "No activity in the last 30 days",
+    "last_30_days": "Last 30 days",
+    "view_all": "View all",
+    "time_ago": {
+      "hours": "{hours}h ago",
+      "days": "{days}d ago"
+    }
+  },
+  "review_system": {
+    "title": "Review System",
+    "repository_student": "Student Repository:",
+    "assigned_reviewers": "Assigned Reviewers",
+    "comments_observations": "Comments and Observations",
+    "actions": {
+      "add_reviewer": "Add Reviewer",
+      "assign_reviewer": "Assign Reviewer",
+      "add_comment": "Add",
+      "add_comment_button": "Add Comment",
+      "remove_reviewer": "Remove Reviewer",
+      "start_review": "Start",
+      "complete_review": "Complete"
+    },
+    "forms": {
+      "assigning_as": "Assigning as: {username}",
+      "commenting_as": "Commenting as: {username}",
+      "select_reviewer": "Select Reviewer",
+      "select_reviewer_placeholder": "Select reviewer...",
+      "comment": "Comment",
+      "comment_placeholder": "Write your comment or observation...",
+      "type": "Type",
+      "priority": "Priority",
+      "multiple_reviewers_tip": "💡 You can assign multiple reviewers to the same assignment"
+    },
+    "types": {
+      "general": "General",
+      "code_quality": "Code Quality",
+      "functionality": "Functionality",
+      "documentation": "Documentation",
+      "suggestion": "Suggestion"
+    },
+    "priorities": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    },
+    "status": {
+      "pending": "Pending",
+      "in_progress": "In Progress",
+      "completed": "Completed"
+    },
+    "quality_score": {
+      "label": "Score:",
+      "title": "Score {score}/10"
+    },
+    "assigned_on": "Assigned on {date}",
+    "no_reviewers": "No reviewers assigned",
+    "no_comments": "No comments",
+    "confirm_remove": "Are you sure you want to remove this reviewer?",
+    "options_menu": "Reviewer options"
+  },
+  "assignment_selector": {
+    "title": "Select Assignment",
+    "description": "Select the assignment you want to review for {username}:",
+    "points_available": "{points} points",
+    "no_points": "No points assigned"
+  },
+  "user_profile": {
+    "sign_in_button": "Sign In",
+    "user_role": "User role",
+    "close_session": "Sign Out"
+  },
+  "auth": {
+    "title": "B4OS Challenges",
+    "subtitle": "Sign in to start your Bitcoin development journey",
+    "unauthorized_title": "Unauthorized Access",
+    "unauthorized_subtitle": "Unauthorized account",
+    "unauthorized_description": "Your GitHub account @{username} is not authorized to access the B4OS dashboard.",
+    "unauthorized_contact": "If you believe this is an error, contact the system administrator.",
+    "close_session_button": "Sign Out"
+  },
+  "footer": {
+    "title": "B4OS Dashboard",
+    "description": "Real-time monitoring of the Bitcoin 4 Open Source program"
+  },
+  "metadata": {
+    "title": "B4OS Challenges - Master Bitcoin Development",
+    "description": "Learn Bitcoin and Lightning Network development through interactive coding challenges"
+  }
+}

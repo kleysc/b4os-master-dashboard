@@ -72,6 +72,10 @@ dist
 # Gatsby files
 .cache/
 public
+# Allow i18n translation files
+!b4os-frontend/public/
+!b4os-frontend/public/i18n/
+!b4os-frontend/public/i18n/*.json
 
 # Storybook build outputs
 .out
