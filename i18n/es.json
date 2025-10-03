@@ -1,0 +1,326 @@
+{
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "retry": "Reintentar",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "close": "Cerrar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "sort": "Ordenar",
+    "reset": "Resetear",
+    "show": "Mostrar",
+    "hide": "Ocultar",
+    "add": "Agregar",
+    "remove": "Remover",
+    "assign": "Asignar",
+    "complete": "Completar",
+    "start": "Iniciar",
+    "view": "Ver",
+    "review": "Revisar",
+    "actions": "Acciones",
+    "progress": "Progreso",
+    "status": "Estado",
+    "score": "Puntaje",
+    "points": "Puntos",
+    "percentage": "Porcentaje",
+    "time": "Tiempo",
+    "date": "Fecha",
+    "name": "Nombre",
+    "username": "Usuario",
+    "email": "Correo",
+    "description": "Descripción",
+    "type": "Tipo",
+    "priority": "Prioridad",
+    "quality": "Calidad",
+    "comments": "Comentarios",
+    "reviews": "Revisiones",
+    "assignments": "Asignaciones",
+    "students": "Estudiantes",
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "completed": "Completado",
+    "incomplete": "Incompleto",
+    "pending": "Pendiente",
+    "in_progress": "En progreso",
+    "excellent": "Excelente",
+    "good": "Bueno",
+    "needs_improvement": "Necesita mejorar",
+    "no_data": "No hay datos disponibles",
+    "no_reviewers": "No hay revisores asignados",
+    "no_comments": "No hay comentarios",
+    "no_repositories": "Sin repositorios recientes",
+    "no_activity": "No hay actividad en los últimos 30 días",
+    "loading_repositories": "Cargando repositorios...",
+    "loading_grades": "Cargando calificaciones...",
+    "verifying_auth": "Verificando autenticación...",
+    "loading_data": "Cargando datos...",
+    "failed_to_load": "No se pudo cargar los repositorios",
+    "failed_to_load_grades": "Error loading grades",
+    "sign_in": "Iniciar Sesión",
+    "sign_out": "Cerrar Sesión",
+    "continue_with": "Continuar con",
+    "by_signing_in": "Al iniciar sesión, aceptas participar en el programa de evaluación técnica B4OS.",
+    "agreement": "Al iniciar sesión, aceptas participar en el programa de evaluación técnica B4OS."
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "leaderboard": "Ranking de Estudiantes",
+    "filters": "Filtros Inteligentes",
+    "profile": "Perfil",
+    "settings": "Configuración"
+  },
+  "dashboard": {
+    "title": "B4OS Dashboard",
+    "subtitle": "Programa Bitcoin 4 Open Source",
+    "description": "Accede con tu cuenta de GitHub autorizada para ver el ranking de estudiantes, estadísticas del programa y monitorear el progreso en tiempo real.",
+    "stats": {
+      "students": "Estudiantes",
+      "assignments": "Asignaciones",
+      "average_score": "Puntuación Promedio",
+      "completion_rate": "Tasa de Finalización"
+    },
+    "showing": "Mostrando {filteredCount} de {totalStudents} estudiantes",
+    "students_count": "{count} estudiantes",
+    "no_data_description": "Los datos aparecerán cuando se sincronicen desde GitHub Classroom"
+  },
+  "filters": {
+    "title": "Filtros Inteligentes",
+    "search_placeholder": "Escribir nombre de usuario...",
+    "search_label": "Buscar estudiante por nombre",
+    "sort_by": "Ordenar por:",
+    "filter_by_status": "Filtrar por estado de progreso",
+    "show_filters": "Mostrar Filtros",
+    "hide_filters": "Ocultar Filtros",
+    "reset_filters": "Resetear",
+    "sort_options": {
+      "resolution_time": {
+        "label": "Tiempo de Resolución",
+        "description": "Más rápido primero",
+        "asc": "Más rápido primero",
+        "desc": "Más lento primero"
+      },
+      "percentage": {
+        "label": "Porcentaje",
+        "description": "Mayor puntaje primero",
+        "asc": "Menor puntaje primero",
+        "desc": "Mayor puntaje primero"
+      },
+      "assignments": {
+        "label": "Asignaciones",
+        "description": "Más completados primero",
+        "asc": "Menos completados primero",
+        "desc": "Más completados primero"
+      },
+      "username": {
+        "label": "Estudiantes",
+        "description": "Orden alfabético"
+      },
+      "total_score": {
+        "label": "Puntos",
+        "description": "Ordenar por puntos"
+      },
+      "quality_score": {
+        "label": "Calidad de Código",
+        "description": "Promedio de calidad de código (basado en todas las evaluaciones)"
+      },
+      "review_status": {
+        "label": "Revisión",
+        "description": "Estado de revisión"
+      }
+    },
+    "status_options": {
+      "all": "Todos los estudiantes",
+      "completed": "Completados (100%)",
+      "partial": "En progreso (1-99%)",
+      "incomplete": "Sin comenzar (0%)"
+    }
+  },
+  "leaderboard": {
+    "title": "Ranking de Estudiantes",
+    "columns": {
+      "students": "Estudiantes",
+      "assignments": "Asignaciones",
+      "resolution_time": "Tiempo de Resolución",
+      "points": "Puntos",
+      "percentage": "Porcentaje",
+      "quality_score": "Calidad de Código",
+      "review_status": "Revisión"
+    },
+    "actions": {
+      "view_progress": "Ver progreso",
+      "review_work": "Revisar",
+      "view_actions": "Actions",
+      "view_github_profile": "Ver perfil de GitHub",
+      "view_assignments": "Ver asignaciones",
+      "view_github_actions": "Ver ejecuciones de GitHub Actions",
+      "review_student_work": "Revisar trabajo del estudiante",
+      "show_grades_breakdown": "Ver desglose de calificaciones",
+      "hide_grades_breakdown": "Ocultar desglose de calificaciones"
+    },
+    "status": {
+      "active": "Activo",
+      "inactive": "Inactivo",
+      "active_user": "Usuario Activo",
+      "active_description": "Tiene calificaciones en asignaciones",
+      "inactive_user": "Usuario Inactivo",
+      "inactive_description": "No tiene calificaciones en asignaciones",
+      "no_reviewer": "Sin revisor",
+      "reviewed": "Revisado",
+      "in_review": "En revisión",
+      "pending_review": "Pendiente"
+    },
+    "time_format": {
+      "days_hours": "{days}d {hours}h",
+      "not_available": "N/A"
+    },
+    "progress_labels": {
+      "excellent": "Excelente",
+      "good": "Bueno",
+      "needs_improvement": "Necesita mejorar",
+      "no_pow": "Sin PoW"
+    },
+    "quality_score": {
+      "title": "Promedio de calidad de código: {score}/10 basado en {count} evaluación{plural}",
+      "evaluations": "({count} eval.)"
+    },
+    "review_info": {
+      "more_reviewers": "+{count} más"
+    },
+    "evaluations": "eval.",
+    "more_reviewers": "más"
+  },
+  "grades_breakdown": {
+    "title": "Desglose de Calificaciones",
+    "assignments_count": "{count} asignaciones",
+    "loading_grades": "Cargando calificaciones...",
+    "no_grades": "No hay calificaciones disponibles",
+    "retry_button": "Reintentar",
+    "actions": {
+      "view_github_actions": "Ver GitHub Actions para esta asignación",
+      "review_assignment": "Revisar esta asignación",
+      "view_reviewers_comments": "Ver revisores y comentarios",
+      "view_review_comments": "Ver comentarios de revisión"
+    },
+    "status": {
+      "no_reviewer": "Sin revisor",
+      "reviewed": "Revisado",
+      "in_review": "En revisión",
+      "pending": "Pendiente"
+    },
+    "progress_labels": {
+      "excellent": "Excelente",
+      "good": "Bueno",
+      "needs_improvement": "Necesita mejorar",
+      "no_pow": "Sin PoW"
+    }
+  },
+  "github_actions_modal": {
+    "title": "GitHub Actions",
+    "repository": "Repository",
+    "open_repository": "Abrir repositorio",
+    "description": "Ver las ejecuciones de CI/CD para este assignment",
+    "view_actions_button": "Ver GitHub Actions"
+  },
+  "github_tooltip": {
+    "collaboration_activity": "Actividad de Colaboración",
+    "recent_repositories": "Repositorios Recientes",
+    "recent_repos": "Repositorios Recientes",
+    "loading_repos": "Cargando repositorios...",
+    "error_loading_repos": "No se pudo cargar los repositorios",
+    "no_recent_repos": "Sin repositorios recientes",
+    "no_activity_30_days": "No hay actividad en los últimos 30 días",
+    "last_30_days": "Últimos 30 días",
+    "view_all": "Ver todos",
+    "time_ago": {
+      "hours": "hace {hours}h",
+      "days": "hace {days}d"
+    }
+  },
+  "review_system": {
+    "title": "Sistema de Revisión",
+    "repository_student": "Repositorio del Estudiante:",
+    "assigned_reviewers": "Revisores Asignados",
+    "comments_observations": "Comentarios y Observaciones",
+    "actions": {
+      "add_reviewer": "Agregar Revisor",
+      "assign_reviewer": "Asignar Revisor",
+      "add_comment": "Agregar",
+      "add_comment_button": "Agregar Comentario",
+      "remove_reviewer": "Remover Revisor",
+      "start_review": "Iniciar",
+      "complete_review": "Completar"
+    },
+    "forms": {
+      "assigning_as": "Asignando como: {username}",
+      "commenting_as": "Comentando como: {username}",
+      "select_reviewer": "Seleccionar Revisor",
+      "select_reviewer_placeholder": "Seleccionar revisor...",
+      "comment": "Comentario",
+      "comment_placeholder": "Escribe tu comentario u observación...",
+      "type": "Tipo",
+      "priority": "Prioridad",
+      "multiple_reviewers_tip": "💡 Puedes asignar múltiples revisores a la misma asignación"
+    },
+    "types": {
+      "general": "General",
+      "code_quality": "Calidad de Código",
+      "functionality": "Funcionalidad",
+      "documentation": "Documentación",
+      "suggestion": "Sugerencia"
+    },
+    "priorities": {
+      "low": "Baja",
+      "medium": "Media",
+      "high": "Alta"
+    },
+    "status": {
+      "pending": "Pendiente",
+      "in_progress": "En progreso",
+      "completed": "Completado"
+    },
+    "quality_score": {
+      "label": "Puntaje:",
+      "title": "Puntaje {score}/10"
+    },
+    "assigned_on": "Asignado el {date}",
+    "no_reviewers": "No hay revisores asignados",
+    "no_comments": "No hay comentarios",
+    "confirm_remove": "¿Estás seguro de que quieres remover este revisor?",
+    "options_menu": "Opciones del revisor"
+  },
+  "assignment_selector": {
+    "title": "Seleccionar Asignación",
+    "description": "Selecciona la asignación que quieres revisar para {username}:",
+    "points_available": "{points} puntos",
+    "no_points": "Sin puntos asignados"
+  },
+  "user_profile": {
+    "sign_in_button": "Sign In",
+    "user_role": "Rol de usuario",
+    "close_session": "Cerrar Sesión"
+  },
+  "auth": {
+    "title": "B4OS Challenges",
+    "subtitle": "Sign in to start your Bitcoin development journey",
+    "unauthorized_title": "Acceso No Autorizado",
+    "unauthorized_subtitle": "Cuenta no autorizada",
+    "unauthorized_description": "Tu cuenta de GitHub @{username} no está autorizada para acceder al dashboard B4OS.",
+    "unauthorized_contact": "Si crees que esto es un error, contacta al administrador del sistema.",
+    "close_session_button": "Cerrar Sesión"
+  },
+  "footer": {
+    "title": "B4OS Dashboard",
+    "description": "Monitoreo en tiempo real del programa Bitcoin 4 Open Source"
+  },
+  "metadata": {
+    "title": "B4OS Challenges - Master Bitcoin Development",
+    "description": "Learn Bitcoin and Lightning Network development through interactive coding challenges"
+  }
+}
