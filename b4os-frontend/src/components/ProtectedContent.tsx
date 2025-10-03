@@ -4,12 +4,14 @@ import { useSession } from "next-auth/react"
 import { ReactNode, useEffect, useRef } from "react"
 import UserProfile from "@/components/UserProfile"
 import { RefreshCwIcon } from "lucide-react"
+import { useTranslation } from '@/hooks/useTranslation'
 
 interface ProtectedContentProps {
   children: ReactNode
 }
 
 export default function ProtectedContent({ children }: ProtectedContentProps) {
+  const { t } = useTranslation()
   const { data: session, status } = useSession()
   const prevStatusRef = useRef<string>('')
 
@@ -32,7 +34,7 @@ export default function ProtectedContent({ children }: ProtectedContentProps) {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black flex items-center justify-center">
         <div className="text-center">
           <RefreshCwIcon className="w-8 h-8 animate-spin text-orange-500 mx-auto mb-4" />
-          <p className="text-white">Verificando autenticación...</p>
+          <p className="text-white">{t('common.verifying_auth')}</p>
         </div>
       </div>
     )
@@ -56,17 +58,17 @@ export default function ProtectedContent({ children }: ProtectedContentProps) {
           
           {/* Título */}
           <h1 className="text-5xl font-bold bg-gradient-to-r from-white via-orange-100 to-orange-300 bg-clip-text text-transparent mb-6">
-            B4OS Dashboard
+            {t('dashboard.title')}
           </h1>
           
           {/* Subtítulo */}
           <p className="text-xl text-gray-300 mb-2 font-medium">
-            Programa Bitcoin 4 Open Source
+            {t('dashboard.subtitle')}
           </p>
           
           {/* Descripción */}
           <p className="text-gray-400 mb-10 leading-relaxed">
-            Accede con tu cuenta de GitHub autorizada para ver el ranking de estudiantes, estadísticas del programa y monitorear el progreso en tiempo real.
+            {t('dashboard.description')}
           </p>
           
           <div className="flex justify-center">
@@ -96,21 +98,21 @@ export default function ProtectedContent({ children }: ProtectedContentProps) {
           
           {/* Título */}
           <h1 className="text-5xl font-bold bg-gradient-to-r from-red-400 via-red-300 to-red-200 bg-clip-text text-transparent mb-6">
-            Acceso No Autorizado
+            {t('auth.unauthorized_title')}
           </h1>
           
           {/* Subtítulo */}
           <p className="text-xl text-gray-300 mb-2 font-medium">
-            Cuenta no autorizada
+            {t('auth.unauthorized_subtitle')}
           </p>
           
           {/* Descripción */}
           <div className="text-gray-400 mb-10 leading-relaxed space-y-4">
             <p>
-              Tu cuenta de GitHub <span className="text-orange-400 font-semibold">@{session.user?.username}</span> no está autorizada para acceder al dashboard B4OS.
+              {t('auth.unauthorized_description').replace('{username}', session.user?.username || '')}
             </p>
             <p className="text-sm">
-              Si crees que esto es un error, contacta al administrador del sistema.
+              {t('auth.unauthorized_contact')}
             </p>
           </div>
           
@@ -119,7 +121,7 @@ export default function ProtectedContent({ children }: ProtectedContentProps) {
               onClick={() => window.location.href = '/api/auth/signout'}
               className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors duration-200"
             >
-              Cerrar Sesión
+              {t('auth.sign_out')}
             </button>
           </div>
           

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { ExternalLinkIcon, Github, Calendar } from 'lucide-react'
+import { useTranslation } from '@/hooks/useTranslation'
 
 interface GitHubTooltipProps {
   username: string
@@ -21,6 +22,7 @@ interface GitHubRepo {
 }
 
 export default function GitHubTooltip({ username, children, index }: GitHubTooltipProps) {
+  const { t } = useTranslation()
   const [showTooltip, setShowTooltip] = useState(false)
   const [repos, setRepos] = useState<GitHubRepo[]>([])
   const [loading, setLoading] = useState(false)
@@ -105,7 +107,7 @@ export default function GitHubTooltip({ username, children, index }: GitHubToolt
               />
               <div className="flex-1 min-w-0">
                 <div className="font-semibold text-gray-900 text-sm">@{username}</div>
-                <div className="text-xs text-gray-500">Actividad de Colaboración</div>
+                <div className="text-xs text-gray-500">{t('github_tooltip.collaboration_activity')}</div>
               </div>
               <a
                 href={`https://github.com/${username}`}
@@ -121,16 +123,16 @@ export default function GitHubTooltip({ username, children, index }: GitHubToolt
             {loading ? (
               <div className="text-center py-4">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-500 mx-auto mb-2"></div>
-                <div className="text-xs text-gray-500">Cargando repositorios...</div>
+                <div className="text-xs text-gray-500">{t('github_tooltip.loading_repos')}</div>
               </div>
             ) : error ? (
               <div className="text-center py-4">
                 <div className="text-red-500 text-xs mb-2">⚠️</div>
-                <div className="text-xs text-gray-500">No se pudo cargar los repositorios</div>
+                <div className="text-xs text-gray-500">{t('github_tooltip.error_loading_repos')}</div>
               </div>
             ) : repos.length > 0 ? (
               <div>
-                <div className="text-xs font-medium text-gray-700 mb-3">Repositorios Recientes</div>
+                <div className="text-xs font-medium text-gray-700 mb-3">{t('github_tooltip.recent_repos')}</div>
                 <div className="space-y-2">
                   {repos.map((repo) => (
                     <div key={repo.name} className="p-2 bg-gray-50 rounded-md border border-gray-200">
@@ -157,8 +159,8 @@ export default function GitHubTooltip({ username, children, index }: GitHubToolt
             ) : (
               <div className="text-center py-4">
                 <div className="text-gray-400 text-2xl mb-2">📁</div>
-                <div className="text-xs text-gray-500">Sin repositorios recientes</div>
-                <div className="text-xs text-gray-400 mt-1">No hay actividad en los últimos 30 días</div>
+                <div className="text-xs text-gray-500">{t('github_tooltip.no_recent_repos')}</div>
+                <div className="text-xs text-gray-400 mt-1">{t('github_tooltip.no_activity_30_days')}</div>
               </div>
             )}
 
@@ -167,7 +169,7 @@ export default function GitHubTooltip({ username, children, index }: GitHubToolt
               <div className="flex items-center justify-between text-xs text-gray-500">
                 <div className="flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
-                  Últimos 30 días
+                  {t('github_tooltip.last_30_days')}
                 </div>
                 <a
                   href={`https://github.com/${username}?tab=repositories`}
@@ -175,7 +177,7 @@ export default function GitHubTooltip({ username, children, index }: GitHubToolt
                   rel="noopener noreferrer"
                   className="text-orange-500 hover:text-orange-600 font-medium"
                 >
-                  Ver todos
+                  {t('github_tooltip.view_all')}
                 </a>
               </div>
             </div>

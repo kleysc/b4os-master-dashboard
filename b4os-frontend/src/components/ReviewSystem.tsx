@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { SupabaseService, type StudentReviewer, type ReviewComment } from "@/lib/supabase";
 import { supabase } from "@/lib/supabase";
+import { useTranslation } from '@/hooks/useTranslation';
 import { 
   UserCheck, 
   MessageSquare, 
@@ -32,6 +33,7 @@ export default function ReviewSystem({
   onClose,
   onDataUpdate
 }: ReviewSystemProps) {
+  const { t } = useTranslation()
   const { data: session } = useSession();
   const [reviewers, setReviewers] = useState<StudentReviewer[]>([]);
   const [comments, setComments] = useState<ReviewComment[]>([]);
@@ -285,7 +287,7 @@ export default function ReviewSystem({
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">
-            Sistema de Revisión
+            {t('review_system.title')}
           </h3>
           <p className="text-sm text-gray-600">
             {studentUsername} - {assignmentName}
@@ -308,7 +310,7 @@ export default function ReviewSystem({
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-2">
             <ExternalLink className="w-4 h-4 text-blue-600" />
-            <span className="text-sm font-medium text-blue-900">Repositorio del Estudiante:</span>
+            <span className="text-sm font-medium text-blue-900">{t('review_system.repository_student')}</span>
           </div>
           <a
             href={repositoryUrl}
@@ -326,14 +328,14 @@ export default function ReviewSystem({
         <div className="flex items-center justify-between pl-1">
           <h4 className="text-md font-medium text-gray-900 flex items-center gap-2">
             <UserCheck className="w-4 h-4" />
-            Revisores Asignados
+            {t('review_system.assigned_reviewers')}
           </h4>
           <button
             onClick={() => setShowAssignForm(!showAssignForm)}
             className="px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-gray-900 border border-gray-300 hover:border-gray-400 rounded flex items-center gap-1.5 transition-colors mr-4"
           >
             <Plus className="w-3.5 h-3.5" />
-            {reviewers.length > 0 ? 'Agregar Revisor' : 'Asignar Revisor'}
+            {reviewers.length > 0 ? t('review_system.actions.add_reviewer') : t('review_system.actions.assign_reviewer')}
           </button>
         </div>
 
@@ -346,19 +348,19 @@ export default function ReviewSystem({
                   <User className="w-4 h-4 text-blue-600" />
                 </div>
                 <span className="text-sm font-medium text-gray-700">
-                  Asignando como: <span className="text-blue-600 font-semibold">{session?.user?.username || 'Cargando...'}</span>
+                  {t('review_system.forms.assigning_as').replace('{username}', session?.user?.username || t('common.loading'))}
                 </span>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Seleccionar Revisor
+                  {t('review_system.forms.select_reviewer')}
                 </label>
                 <select
                   value={selectedReviewer}
                   onChange={(e) => setSelectedReviewer(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
                 >
-                  <option value="">Seleccionar revisor...</option>
+                  <option value="">{t('review_system.forms.select_reviewer_placeholder')}</option>
                   {availableReviewers
                     .filter(reviewer => !reviewers.some(r => r.reviewer_username === reviewer.github_username))
                     .map((reviewer) => (
@@ -369,7 +371,7 @@ export default function ReviewSystem({
                 </select>
                 {reviewers.length > 0 && (
                   <p className="text-xs text-gray-500 mt-1">
-                    💡 Puedes asignar múltiples revisores al mismo assignment
+                    {t('review_system.forms.multiple_reviewers_tip')}
                   </p>
                 )}
               </div>
@@ -378,13 +380,13 @@ export default function ReviewSystem({
                   onClick={handleAssignReviewer}
                   className="px-3 py-1.5 text-sm font-medium text-white bg-gray-800 hover:bg-gray-900 rounded transition-colors"
                 >
-                  {reviewers.length > 0 ? 'Agregar' : 'Asignar'}
+                  {reviewers.length > 0 ? t('review_system.actions.add_reviewer') : t('review_system.actions.assign_reviewer')}
                 </button>
                 <button
                   onClick={() => setShowAssignForm(false)}
                   className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-800 border border-gray-300 hover:border-gray-400 rounded transition-colors"
                 >
-                  Cancelar
+                  {t('common.cancel')}
                 </button>
               </div>
             </div>
@@ -396,7 +398,7 @@ export default function ReviewSystem({
           {reviewers.length === 0 ? (
             <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
               <UserCheck className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-              <p className="text-sm">No hay revisores asignados</p>
+              <p className="text-sm">{t('review_system.no_reviewers')}</p>
             </div>
           ) : (
             reviewers.map((reviewer) => (
@@ -422,7 +424,7 @@ export default function ReviewSystem({
                         className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                       >
                         <Trash2 className="w-4 h-4" />
-                        Remover Revisor
+                        {t('review_system.actions.remove_reviewer')}
                       </button>
                     </div>
                   )}
@@ -436,7 +438,7 @@ export default function ReviewSystem({
                     <div className="min-w-0 flex-1">
                       <h5 className="font-semibold text-gray-900 truncate">{reviewer.reviewer_username}</h5>
                       <p className="text-sm text-gray-500">
-                        Asignado el {new Date(reviewer.assigned_at).toLocaleDateString()}
+                        {t('review_system.assigned_on').replace('{date}', new Date(reviewer.assigned_at).toLocaleDateString())}
                       </p>
                     </div>
                   </div>
@@ -448,7 +450,7 @@ export default function ReviewSystem({
                     {/* Quality Score Section */}
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-600 font-medium">Puntaje:</span>
+                        <span className="text-xs text-gray-600 font-medium">{t('review_system.quality_score.label')}</span>
                         {/* Interactive Score Bar */}
                         <div className="flex items-center gap-1">
                           {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
@@ -464,7 +466,7 @@ export default function ReviewSystem({
                                     : 'bg-green-400 hover:bg-green-500'
                                   : 'bg-gray-200 hover:bg-gray-300'
                               }`}
-                              title={`Puntaje ${num}/10`}
+                              title={t('review_system.quality_score.title').replace('{score}', num.toString())}
                             />
                           ))}
                         </div>
@@ -477,7 +479,7 @@ export default function ReviewSystem({
                           onClick={() => handleStatusUpdate(reviewer.id, "in_progress")}
                           className="px-3 py-1 text-xs font-medium text-amber-700 hover:text-amber-800 border border-amber-300 hover:border-amber-400 rounded transition-colors"
                         >
-                          Iniciar
+                          {t('review_system.actions.start_review')}
                         </button>
                       )}
                       {reviewer.status === "in_progress" && (
@@ -485,7 +487,7 @@ export default function ReviewSystem({
                           onClick={() => handleStatusUpdate(reviewer.id, "completed")}
                           className="px-3 py-1 text-xs font-medium text-green-700 hover:text-green-800 border border-green-300 hover:border-green-400 rounded transition-colors"
                         >
-                          Completar
+                          {t('review_system.actions.complete_review')}
                         </button>
                       )}
                     </div>
@@ -502,14 +504,14 @@ export default function ReviewSystem({
         <div className="flex items-center justify-between pl-1">
           <h4 className="text-md font-medium text-gray-900 flex items-center gap-2">
             <MessageSquare className="w-4 h-4" />
-            Comentarios y Observaciones
+            {t('review_system.comments_observations')}
           </h4>
           <button
             onClick={() => setShowCommentForm(!showCommentForm)}
             className="px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-gray-900 border border-gray-300 hover:border-gray-400 rounded flex items-center gap-1.5 transition-colors mr-5"
           >
             <Plus className="w-3.5 h-3.5" />
-            Agregar
+            {t('review_system.actions.add_comment')}
           </button>
         </div>
 
@@ -522,50 +524,50 @@ export default function ReviewSystem({
                   <User className="w-4 h-4 text-green-600" />
                 </div>
                 <span className="text-sm font-medium text-gray-700">
-                  Comentando como: <span className="text-green-600 font-semibold">{session?.user?.username || 'Cargando...'}</span>
+                  {t('review_system.forms.commenting_as').replace('{username}', session?.user?.username || t('common.loading'))}
                 </span>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Comentario
+                  {t('review_system.forms.comment')}
                 </label>
                 <textarea
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white text-gray-900 resize-none"
-                  placeholder="Escribe tu comentario u observación..."
+                  placeholder={t('review_system.forms.comment_placeholder')}
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tipo
+                    {t('review_system.forms.type')}
                   </label>
                   <select
                     value={commentType}
                     onChange={(e) => setCommentType(e.target.value as 'general' | 'code_quality' | 'functionality' | 'documentation' | 'suggestion')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white text-gray-900"
                   >
-                    <option value="general">General</option>
-                    <option value="code_quality">Calidad de Código</option>
-                    <option value="functionality">Funcionalidad</option>
-                    <option value="documentation">Documentación</option>
-                    <option value="suggestion">Sugerencia</option>
+                    <option value="general">{t('review_system.types.general')}</option>
+                    <option value="code_quality">{t('review_system.types.code_quality')}</option>
+                    <option value="functionality">{t('review_system.types.functionality')}</option>
+                    <option value="documentation">{t('review_system.types.documentation')}</option>
+                    <option value="suggestion">{t('review_system.types.suggestion')}</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Prioridad
+                    {t('review_system.forms.priority')}
                   </label>
                   <select
                     value={commentPriority}
                     onChange={(e) => setCommentPriority(e.target.value as 'low' | 'medium' | 'high')}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white text-gray-900"
                   >
-                    <option value="low">Baja</option>
-                    <option value="medium">Media</option>
-                    <option value="high">Alta</option>
+                    <option value="low">{t('review_system.priorities.low')}</option>
+                    <option value="medium">{t('review_system.priorities.medium')}</option>
+                    <option value="high">{t('review_system.priorities.high')}</option>
                   </select>
                 </div>
               </div>
@@ -574,13 +576,13 @@ export default function ReviewSystem({
                   onClick={handleAddComment}
                   className="px-3 py-1.5 text-sm font-medium text-white bg-gray-800 hover:bg-gray-900 rounded transition-colors"
                 >
-                  Agregar Comentario
+                  {t('review_system.actions.add_comment_button')}
                 </button>
                 <button
                   onClick={() => setShowCommentForm(false)}
                   className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-800 border border-gray-300 hover:border-gray-400 rounded transition-colors"
                 >
-                  Cancelar
+                  {t('common.cancel')}
                 </button>
               </div>
             </div>
@@ -592,7 +594,7 @@ export default function ReviewSystem({
           {comments.length === 0 ? (
             <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg border border-gray-200">
               <MessageSquare className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-              <p className="text-sm">No hay comentarios</p>
+              <p className="text-sm">{t('review_system.no_comments')}</p>
             </div>
           ) : (
             comments.map((comment) => (
