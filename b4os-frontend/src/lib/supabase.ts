@@ -216,15 +216,35 @@ export class SupabaseService {
     const { data: gradesData, error: gradesError } = await supabase
       .from('consolidated_grades')
       .select('*')
-    
+
     if (gradesError) {
       throw new Error(`Failed to fetch consolidated grades: ${gradesError.message}`)
     }
-    
+
     if (!gradesData || gradesData.length === 0) {
       return []
     }
-    
+
+    // Get fork data from grades table to determine accepted assignments
+    const { data: gradesWithFork, error: forkError } = await supabase
+      .from('grades')
+      .select('github_username, assignment_name, fork_created_at')
+
+    if (forkError) {
+      throw new Error(`Failed to fetch fork data: ${forkError.message}`)
+    }
+
+    // Create a set of accepted assignments per student (those with fork_created_at)
+    const acceptedAssignments = new Map<string, Set<string>>()
+    gradesWithFork?.forEach(grade => {
+      if (grade.fork_created_at) {
+        if (!acceptedAssignments.has(grade.github_username)) {
+          acceptedAssignments.set(grade.github_username, new Set())
+        }
+        acceptedAssignments.get(grade.github_username)!.add(grade.assignment_name)
+      }
+    })
+
     // Group by student and calculate totals
     const studentMap = new Map<string, {
       github_username: string
@@ -233,7 +253,7 @@ export class SupabaseService {
       assignments_completed: number
       grades: ConsolidatedGrade[]
     }>()
-    
+
     gradesData.forEach(grade => {
       const username = grade.github_username
       if (!studentMap.has(username)) {
@@ -245,25 +265,22 @@ export class SupabaseService {
           grades: []
         })
       }
-      
+
       const student = studentMap.get(username)!
       student.total_score += grade.points_awarded || 0
       student.total_possible += grade.points_available || 0
-      if (grade.points_awarded && grade.points_awarded > 0) {
-        student.assignments_completed++
-      }
       student.grades.push(grade)
     })
-    
+
     // Convert to array and calculate percentages
     const leaderboard = Array.from(studentMap.values()).map(student => ({
       github_username: student.github_username,
       total_score: student.total_score,
       total_possible: student.total_possible,
-      percentage: student.total_possible > 0 
+      percentage: student.total_possible > 0
         ? Math.round((student.total_score / student.total_possible) * 100)
         : 0,
-      assignments_completed: student.assignments_completed
+      assignments_completed: acceptedAssignments.get(student.github_username)?.size || 0
     }))
     
     // Sort by percentage descending (fallback behavior)
