@@ -17,6 +17,7 @@ export interface FilterState {
   timeRange: { min: number; max: number }
   percentageRange: { min: number; max: number }
   searchTerm: string
+  selectedAssignment: string  // 'all' or assignment name
   showColumns: {
     resolutionTime: boolean
     percentage: boolean
@@ -29,9 +30,10 @@ const defaultFilters: FilterState = {
   sortBy: 'username',
   sortOrder: 'asc',
   showOnly: 'all',
-  timeRange: { min: 0, max: 200 },
-  percentageRange: { min: 0, max: 100 },
+  timeRange: { min: 0, max: 10000 },
+  percentageRange: { min: 0, max: 200 },
   searchTerm: '',
+  selectedAssignment: 'all',
   showColumns: {
     resolutionTime: true,
     percentage: true,
@@ -44,6 +46,21 @@ export default function DashboardFilters({ onFiltersChange, totalStudents, filte
   const { t } = useTranslation()
   const [filters, setFilters] = useState<FilterState>(defaultFilters)
   const [isExpanded, setIsExpanded] = useState(false)
+  const [assignments, setAssignments] = useState<Array<{ name: string; points_available: number | null }>>([])
+
+  // Load assignments on mount
+  useEffect(() => {
+    const loadAssignments = async () => {
+      try {
+        const { SupabaseService } = await import('@/lib/supabase')
+        const data = await SupabaseService.getAssignments()
+        setAssignments(data)
+      } catch (error) {
+        console.error('Error loading assignments:', error)
+      }
+    }
+    loadAssignments()
+  }, [])
 
   useEffect(() => {
     onFiltersChange(filters)
@@ -63,6 +80,10 @@ export default function DashboardFilters({ onFiltersChange, totalStudents, filte
 
   const handleSearchChange = (searchTerm: string) => {
     setFilters(prev => ({ ...prev, searchTerm }))
+  }
+
+  const handleAssignmentChange = (selectedAssignment: string) => {
+    setFilters(prev => ({ ...prev, selectedAssignment }))
   }
 
   const resetFilters = () => {
@@ -129,6 +150,23 @@ export default function DashboardFilters({ onFiltersChange, totalStudents, filte
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-800"
               />
             </div>
+          </div>
+
+          {/* Filtro por Assignment */}
+          <div>
+            <h4 className="font-medium text-gray-900 mb-3">Filtrar por Challenge</h4>
+            <select
+              value={filters.selectedAssignment}
+              onChange={(e) => handleAssignmentChange(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-800 bg-white"
+            >
+              <option value="all">Todos los challenges</option>
+              {assignments.map((assignment) => (
+                <option key={assignment.name} value={assignment.name}>
+                  {assignment.name} ({assignment.points_available || 0} pts)
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Ordenamiento */}

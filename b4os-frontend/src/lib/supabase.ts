@@ -194,25 +194,56 @@ export class SupabaseService {
     ranking_position?: number
     has_fork?: boolean
   }>> {
+    // Get all students first to ensure we include everyone
+    const { data: allStudents, error: studentsError } = await supabase
+      .from('students')
+      .select('github_username')
+
     // Try to get from admin_leaderboard first (time-based ranking)
     const { data: adminData, error: adminError } = await supabase
       .from('admin_leaderboard')
       .select('*')
+      .limit(1000)
       .order('ranking_position')
     
     if (!adminError && adminData && adminData.length > 0) {
-      return adminData.map(student => ({
-        github_username: student.github_username,
-        total_score: student.total_score,
-        total_possible: student.total_possible,
-        percentage: student.percentage,
-        assignments_completed: student.assignments_completed,
-        fork_created_at: student.fork_created_at,
-        last_updated_at: student.last_updated_at,
-        resolution_time_hours: student.resolution_time_hours,
-        ranking_position: student.ranking_position,
-        has_fork: student.has_fork
-      }))
+      // Create a map of students from admin_leaderboard
+      const leaderboardMap = new Map(
+        adminData.map(student => [student.github_username, {
+          github_username: student.github_username,
+          total_score: student.total_score,
+          total_possible: student.total_possible,
+          percentage: student.percentage,
+          assignments_completed: student.assignments_completed,
+          fork_created_at: student.fork_created_at,
+          last_updated_at: student.last_updated_at,
+          resolution_time_hours: student.resolution_time_hours,
+          ranking_position: student.ranking_position,
+          has_fork: student.has_fork
+        }])
+      )
+
+      // Add any students who are not in the leaderboard but exist in students table
+      if (!studentsError && allStudents) {
+        allStudents.forEach(student => {
+          if (!leaderboardMap.has(student.github_username)) {
+            leaderboardMap.set(student.github_username, {
+              github_username: student.github_username,
+              total_score: 0,
+              total_possible: 0,
+              percentage: 0,
+              assignments_completed: 0,
+              fork_created_at: undefined,
+              last_updated_at: undefined,
+              resolution_time_hours: undefined,
+              ranking_position: undefined,
+              has_fork: false
+            })
+          }
+        })
+      }
+
+      return Array.from(leaderboardMap.values())
     }
     
     // Fallback to consolidated_grades if admin_leaderboard is not available
@@ -220,15 +251,35 @@ export class SupabaseService {
     const { data: gradesData, error: gradesError } = await supabase
       .from('consolidated_grades')
       .select('*')
-    
+
     if (gradesError) {
       throw new Error(`Failed to fetch consolidated grades: ${gradesError.message}`)
     }
-    
+
     if (!gradesData || gradesData.length === 0) {
       return []
     }
-    
+
+    // Get fork data from grades table to determine accepted assignments
+    const { data: gradesWithFork, error: forkError } = await supabase
+      .from('grades')
+      .select('github_username, assignment_name, fork_created_at')
+
+    if (forkError) {
+      throw new Error(`Failed to fetch fork data: ${forkError.message}`)
+    }
+
+    // Create a set of accepted assignments per student (those with fork_created_at)
+    const acceptedAssignments = new Map<string, Set<string>>()
+    gradesWithFork?.forEach(grade => {
+      if (grade.fork_created_at) {
+        if (!acceptedAssignments.has(grade.github_username)) {
+          acceptedAssignments.set(grade.github_username, new Set())
+        }
+        acceptedAssignments.get(grade.github_username)!.add(grade.assignment_name)
+      }
+    })
+
     // Group by student and calculate totals
     const studentMap = new Map<string, {
       github_username: string
@@ -237,7 +288,7 @@ export class SupabaseService {
       assignments_completed: number
       grades: ConsolidatedGrade[]
     }>()
-    
+
     gradesData.forEach(grade => {
       const username = grade.github_username
       if (!studentMap.has(username)) {
@@ -249,26 +300,39 @@ export class SupabaseService {
           grades: []
         })
       }
-      
+
       const student = studentMap.get(username)!
       student.total_score += grade.points_awarded || 0
       student.total_possible += grade.points_available || 0
-      if (grade.points_awarded && grade.points_awarded > 0) {
-        student.assignments_completed++
-      }
       student.grades.push(grade)
     })
-    
+
     // Convert to array and calculate percentages
     const leaderboard = Array.from(studentMap.values()).map(student => ({
       github_username: student.github_username,
       total_score: student.total_score,
       total_possible: student.total_possible,
-      percentage: student.total_possible > 0 
+      percentage: student.total_possible > 0
         ? Math.round((student.total_score / student.total_possible) * 100)
         : 0,
-      assignments_completed: student.assignments_completed
+      assignments_completed: acceptedAssignments.get(student.github_username)?.size || 0
     }))
+
+    // Add any students who are not in the leaderboard but exist in students table
+    if (!studentsError && allStudents) {
+      const existingUsernames = new Set(leaderboard.map(s => s.github_username))
+      allStudents.forEach(student => {
+        if (!existingUsernames.has(student.github_username)) {
+          leaderboard.push({
+            github_username: student.github_username,
+            total_score: 0,
+            total_possible: 0,
+            percentage: 0,
+            assignments_completed: 0
+          })
+        }
+      })
+    }
     
     // Sort by percentage descending (fallback behavior)
     return leaderboard.sort((a, b) => b.percentage - a.percentage)
@@ -310,13 +374,15 @@ export class SupabaseService {
     points_awarded: number | null
     points_available: number | null
     percentage: number | null
+    fork_created_at?: string | null
+    fork_updated_at?: string | null
   }>> {
     const { data: grades, error: gradesError } = await supabase
       .from('grades')
-      .select('assignment_name, points_awarded')
+      .select('assignment_name, points_awarded, fork_created_at, fork_updated_at')
       .eq('github_username', username)
       .order('assignment_name')
-    
+
     if (gradesError) {
       throw new Error(`Failed to fetch grades for student: ${gradesError.message}`)
     }
@@ -325,7 +391,7 @@ export class SupabaseService {
       .from('assignments')
       .select('name, points_available')
       .order('name')
-    
+
     if (assignmentsError) {
       throw new Error(`Failed to fetch assignments: ${assignmentsError.message}`)
     }
@@ -336,23 +402,49 @@ export class SupabaseService {
       assignmentMap.set(assignment.name, assignment.points_available || 0)
     })
 
-    // Create grades lookup
-    const gradesMap = new Map<string, number>()
+    // KISS: For assignments with no points_available, use points_awarded as reference
+    // Get all grades for all students to find max points
+    const { data: allGrades } = await supabase
+      .from('grades')
+      .select('assignment_name, points_awarded')
+
+    if (allGrades) {
+      // For each assignment, if points_available is 0, use max points_awarded
+      assignments.forEach(assignment => {
+        if (!assignment.points_available || assignment.points_available === 0) {
+          const assignmentGrades = allGrades.filter(g => g.assignment_name === assignment.name)
+          const maxPoints = Math.max(...assignmentGrades.map(g => g.points_awarded || 0), 0)
+          if (maxPoints > 0) {
+            assignmentMap.set(assignment.name, maxPoints)
+          }
+        }
+      })
+    }
+
+    // Create grades lookup with fork dates
+    const gradesMap = new Map<string, { points: number, fork_created_at: string | null, fork_updated_at: string | null }>()
     grades.forEach(grade => {
-      gradesMap.set(grade.assignment_name, grade.points_awarded || 0)
+      gradesMap.set(grade.assignment_name, {
+        points: grade.points_awarded || 0,
+        fork_created_at: grade.fork_created_at || null,
+        fork_updated_at: grade.fork_updated_at || null
+      })
     })
 
     // Create breakdown for all assignments
     const breakdown = assignments.map(assignment => {
-      const pointsAwarded = gradesMap.get(assignment.name) || 0
-      const pointsAvailable = assignment.points_available || 0
+      const gradeData = gradesMap.get(assignment.name)
+      const pointsAwarded = gradeData?.points || 0
+      const pointsAvailable = assignmentMap.get(assignment.name) || 0
       const percentage = pointsAvailable > 0 ? Math.round((pointsAwarded / pointsAvailable) * 100) : 0
 
       return {
         assignment_name: assignment.name,
         points_awarded: pointsAwarded,
         points_available: pointsAvailable,
-        percentage: percentage
+        percentage: percentage,
+        fork_created_at: gradeData?.fork_created_at || null,
+        fork_updated_at: gradeData?.fork_updated_at || null
       }
     })
 

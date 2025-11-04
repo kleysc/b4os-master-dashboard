@@ -62,6 +62,7 @@ export default function Home() {
     new Set()
   );
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [allGrades, setAllGrades] = useState<Array<{ github_username: string; assignment_name: string; points_awarded: number | null }>>([]);
   const [filters, setFilters] = useState<FilterState | null>(null);
   const [filteredStudents, setFilteredStudents] = useState<
     Array<{
@@ -101,6 +102,10 @@ export default function Home() {
       setAssignments(dashboardData.assignments);
       setLeaderboard(dashboardData.leaderboard);
       setStats(dashboardData.stats);
+
+      // Load all grades for assignment filtering
+      const gradesData = await SupabaseService.getGrades();
+      setAllGrades(gradesData);
 
       // Process review data from grouped results (no more N+1 queries)
       processReviewStatuses(dashboardData.leaderboard, dashboardData.reviewersGrouped);
@@ -282,6 +287,17 @@ export default function Home() {
       );
     }
 
+    // Aplicar filtro por assignment específico
+    if (filters.selectedAssignment && filters.selectedAssignment !== 'all') {
+      // Filter students who have grades for the selected assignment
+      const studentsWithAssignment = new Set(
+        allGrades
+          .filter(g => g.assignment_name === filters.selectedAssignment)
+          .map(g => g.github_username)
+      );
+      filtered = filtered.filter(student => studentsWithAssignment.has(student.github_username));
+    }
+
     // Aplicar filtro de estado
     if (filters.showOnly !== "all") {
       filtered = filtered.filter((student) => {
@@ -392,7 +408,7 @@ export default function Home() {
       const filtered = applyFilters(leaderboard, newFilters);
       setFilteredStudents(filtered);
     }
-  }, [leaderboard]);
+  }, [leaderboard, allGrades]);
 
   // Aplicar filtros cuando cambien los estudiantes
   useEffect(() => {
@@ -408,7 +424,7 @@ export default function Home() {
         setFilteredStudents(sorted);
       }
     }
-  }, [leaderboard, filters, sortConfig]);
+  }, [leaderboard, filters, sortConfig, allGrades]);
 
   const openActionsModal = (username: string, assignmentName: string) => {
     setSelectedStudent({ username, assignmentName });
@@ -564,7 +580,7 @@ export default function Home() {
         <section className="container mx-auto px-6 py-4">
           <DashboardFilters
             onFiltersChange={handleFiltersChange}
-            totalStudents={leaderboard.length}
+            totalStudents={stats.totalStudents || leaderboard.length}
             filteredCount={filteredStudents.length}
           />
         </section>
@@ -1214,6 +1230,7 @@ export default function Home() {
                             isExpanded={expandedStudents.has(
                               student.github_username
                             )}
+                            selectedAssignment={filters?.selectedAssignment}
                             onOpenActions={openActionsModal}
                             onOpenReview={openReviewModal}
                             onDataUpdate={handleReviewDataUpdate}

@@ -45,3 +45,17 @@ body {
   max-width: 100%;
   word-wrap: break-word;
 }
+
+/* Responsive card layout for grades breakdown */
+.grades-breakdown-card {
+  min-width: 0; /* Allow flex items to shrink below their content size */
+}
+
+.grades-breakdown-card .card-content {
+  overflow: hidden; /* Prevent content from overflowing */
+}
+
+.grades-breakdown-card .buttons-container {
+  flex-shrink: 0; /* Prevent buttons from shrinking */
+  white-space: nowrap; /* Keep buttons on same line */
+}

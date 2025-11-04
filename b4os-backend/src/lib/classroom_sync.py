@@ -476,24 +476,41 @@ class ClassroomSupabaseSync:
             
             # Create lookup dictionaries
             assignment_points = {a['name']: a['points_available'] for a in assignments_result.data if a['points_available']}
-            
+
+            # KISS: For assignments with no points_available, use the max points_awarded as reference
+            # This handles cases where GitHub Classroom doesn't have points configured
+            for assignment_name in set(g['assignment_name'] for g in grades_result.data):
+                if assignment_name not in assignment_points or assignment_points[assignment_name] == 0:
+                    # Find the maximum points awarded for this assignment
+                    max_points = max(
+                        (g['points_awarded'] for g in grades_result.data
+                         if g['assignment_name'] == assignment_name and g['points_awarded']),
+                        default=0
+                    )
+                    if max_points > 0:
+                        assignment_points[assignment_name] = max_points
+                        logger.info(f"Using max points ({max_points}) as reference for assignment: {assignment_name}")
+
             # Calculate leaderboard data for each student
             leaderboard_data = []
-            
+
             for student in students_result.data:
                 github_username = student['github_username']
                 has_fork = student.get('has_fork', False)
-                
+
                 # Get grades for this student
                 student_grades = [g for g in grades_result.data if g['github_username'] == github_username]
-                
+
                 # Calculate totals
                 total_score = sum(grade['points_awarded'] for grade in student_grades if grade['points_awarded'])
                 total_possible = sum(assignment_points.get(grade['assignment_name'], 0) for grade in student_grades)
                 percentage = round((total_score / total_possible) * 100) if total_possible > 0 else 0
-                
-                # Count unique assignments completed (not just grade records)
-                unique_assignments = set(grade['assignment_name'] for grade in student_grades)
+
+                # Count unique assignments that have been accepted (have fork_created_at)
+                unique_assignments = set(
+                    grade['assignment_name'] for grade in student_grades
+                    if grade.get('fork_created_at') is not None
+                )
                 assignments_completed = len(unique_assignments)
                 
                 # Calculate resolution time only if student has a fork
@@ -739,12 +756,20 @@ class ClassroomSupabaseSync:
         for _, row in grades_df.iterrows():
             try:
                 points_awarded = row['points_awarded']
-                grades_data.append({
+                grade_record = {
                     "github_username": str(row['github_username']).strip(),
                     "assignment_name": str(row['assignment_name']).strip(),
-                    "points_awarded": int(points_awarded) if pd.notna(points_awarded) else None,
-                    "updated_at": datetime.datetime.now().isoformat()
-                })
+                    "points_awarded": int(points_awarded) if pd.notna(points_awarded) else None
+                }
+
+                # Add fork dates if available
+                if 'fork_created_at' in row and pd.notna(row['fork_created_at']):
+                    grade_record['fork_created_at'] = row['fork_created_at']
+
+                if 'fork_updated_at' in row and pd.notna(row['fork_updated_at']):
+                    grade_record['fork_updated_at'] = row['fork_updated_at']
+
+                grades_data.append(grade_record)
             except (KeyError, ValueError, TypeError) as e:
                 logger.error(f"Invalid grade data: {row.to_dict()}, Error: {e}")
                 continue
@@ -786,6 +811,8 @@ class ClassroomSupabaseSync:
         all_grades = []
         assignment_info = []
         students_with_repo_info = {}  # Store student data with repository info
+        assignment_fork_dates = {}  # Store (username, assignment) -> fork_created_at mapping
+        assignment_fork_updated = {}  # Store (username, assignment) -> fork_updated_at mapping
         
         for assignment_id, assignment_name, assignment_repo in assignment_data:
             logger.info(f"Processing assignment: {assignment_name} (ID: {assignment_id})")
@@ -831,42 +858,57 @@ class ClassroomSupabaseSync:
                     grades_df['assignment_name'] = formatted_name
                     grades_df = grades_df[['github_username', 'assignment_name', 'points_awarded']]
                     
-                    # Get repository information for each student
+                    # Get repository information for each student for THIS assignment
                     logger.info(f"Getting repository information for {len(df)} students...")
                     for _, row in df.iterrows():
                         github_username = str(row['github_username']).strip()
                         student_repo_url = row.get('student_repository_url', '')
-                        
-                        if github_username not in students_with_repo_info and student_repo_url:
-                            logger.info(f"Getting repo info for {github_username}: {student_repo_url}")
-                            
+
+                        if student_repo_url:
+                            logger.info(f"Getting repo info for {github_username} ({formatted_name}): {student_repo_url}")
+
                             # Get repository information
                             repo_info = self.get_repository_info(student_repo_url)
-                            
+
                             if repo_info:
                                 # Verify this is actually a fork (has parent repository)
                                 if repo_info.get('is_fork', False):
-                                    # Calculate resolution time only for actual forks
-                                    resolution_time = self.calculate_resolution_time(
-                                        repo_info['created_at'], 
-                                        repo_info['updated_at']
-                                    )
-                                    
-                                    students_with_repo_info[github_username] = {
-                                        'github_username': github_username,
-                                        'fork_created_at': repo_info['created_at'],
-                                        'last_updated_at': repo_info['updated_at'],
-                                        'resolution_time_hours': resolution_time,
-                                        'has_fork': True
-                                    }
-                                    
-                                    logger.info(f"FORK FOUND for {github_username}: "
-                                              f"created={repo_info['created_at']}, "
-                                              f"updated={repo_info['updated_at']}, "
-                                              f"resolution={resolution_time}h")
+                                    # Store fork dates for this specific assignment
+                                    assignment_fork_dates[(github_username, formatted_name)] = repo_info['created_at']
+                                    assignment_fork_updated[(github_username, formatted_name)] = repo_info['updated_at']
+
+                                    logger.info(f"FORK FOUND for {github_username} ({formatted_name}): "
+                                              f"created={repo_info['created_at']}, updated={repo_info['updated_at']}")
+
+                                    # Also update students_with_repo_info if not already set (for students table)
+                                    if github_username not in students_with_repo_info:
+                                        resolution_time = self.calculate_resolution_time(
+                                            repo_info['created_at'],
+                                            repo_info['updated_at']
+                                        )
+
+                                        students_with_repo_info[github_username] = {
+                                            'github_username': github_username,
+                                            'fork_created_at': repo_info['created_at'],
+                                            'last_updated_at': repo_info['updated_at'],
+                                            'resolution_time_hours': resolution_time,
+                                            'has_fork': True
+                                        }
                                 else:
                                     # Repository exists but is not a fork
                                     logger.warning(f"Repository exists for {github_username} but is NOT a fork")
+                                    if github_username not in students_with_repo_info:
+                                        students_with_repo_info[github_username] = {
+                                            'github_username': github_username,
+                                            'fork_created_at': None,
+                                            'last_updated_at': None,
+                                            'resolution_time_hours': None,
+                                            'has_fork': False
+                                        }
+                            else:
+                                logger.warning(f"Could not get repository info for {github_username} - no fork exists")
+                                # Add student without repo info
+                                if github_username not in students_with_repo_info:
                                     students_with_repo_info[github_username] = {
                                         'github_username': github_username,
                                         'fork_created_at': None,
@@ -874,20 +916,18 @@ class ClassroomSupabaseSync:
                                         'resolution_time_hours': None,
                                         'has_fork': False
                                     }
-                            else:
-                                logger.warning(f"Could not get repository info for {github_username} - no fork exists")
-                                # Add student without repo info
-                                students_with_repo_info[github_username] = {
-                                    'github_username': github_username,
-                                    'fork_created_at': None,
-                                    'last_updated_at': None,
-                                    'resolution_time_hours': None,
-                                    'has_fork': False
-                                }
-                            
+
                             # Add small delay to respect GitHub API rate limits
                             time.sleep(0.1)
-                    
+
+                    # Add fork dates columns to grades_df
+                    grades_df['fork_created_at'] = grades_df['github_username'].apply(
+                        lambda username: assignment_fork_dates.get((username, formatted_name))
+                    )
+                    grades_df['fork_updated_at'] = grades_df['github_username'].apply(
+                        lambda username: assignment_fork_updated.get((username, formatted_name))
+                    )
+
                     all_grades.append(grades_df)
                     logger.info(f"Processed {len(grades_df)} grades for assignment: {formatted_name}")
                 else:
