@@ -46,7 +46,7 @@ export default function DashboardFilters({ onFiltersChange, totalStudents, filte
   const { t } = useTranslation()
   const [filters, setFilters] = useState<FilterState>(defaultFilters)
   const [isExpanded, setIsExpanded] = useState(false)
-  const [assignments, setAssignments] = useState<Array<{ name: string; points_available: number }>>([])
+  const [assignments, setAssignments] = useState<Array<{ name: string; points_available: number | null }>>([])
 
   // Load assignments on mount
   useEffect(() => {
