@@ -27,7 +27,6 @@ export interface Assignment {
   id: number
   name: string
   points_available: number | null
-  created_at: string
   updated_at: string
 }
 
@@ -73,111 +72,49 @@ export interface ReviewComment {
   updated_at: string
 }
 
-// Database functions
+// Database functions - Now using API routes to keep data secure
 export class SupabaseService {
   // Get all students
   static async getStudents(): Promise<Student[]> {
-    const { data, error } = await supabase
-      .from('students')
-      .select('*')
-      .order('github_username')
-    
-    if (error) {
-      throw new Error(`Failed to fetch students: ${error.message}`)
-    }
-    
-    return data || []
+    // This method is kept for backward compatibility but should use API routes
+    // For now, we'll use a minimal approach - students are loaded via dashboard
+    return []
   }
 
   // Get all assignments
   static async getAssignments(): Promise<Assignment[]> {
-    const { data, error } = await supabase
-      .from('assignments')
-      .select('*')
-      .order('name')
-    
-    if (error) {
-      throw new Error(`Failed to fetch assignments: ${error.message}`)
-    }
-    
-    return data || []
+    // This method is kept for backward compatibility but should use API routes
+    // For now, we'll use a minimal approach - assignments are loaded via dashboard
+    return []
   }
 
   // Get all grades
   static async getGrades(): Promise<Grade[]> {
-    const { data, error } = await supabase
-      .from('grades')
-      .select('*')
-      .order('github_username')
-    
-    if (error) {
-      throw new Error(`Failed to fetch grades: ${error.message}`)
+    const response = await fetch('/api/grades')
+    if (!response.ok) {
+      throw new Error(`Failed to fetch grades: ${response.statusText}`)
     }
-    
+    const data = await response.json()
     return data || []
   }
 
   // Get consolidated grades (students with their grades for all assignments)
   static async getConsolidatedGrades(): Promise<ConsolidatedGrade[]> {
-    const { data, error } = await supabase
-      .from('consolidated_grades')
-      .select('*')
-      .order('github_username')
-    
-    if (error) {
-      throw new Error(`Failed to fetch consolidated grades: ${error.message}`)
-    }
-    
-    return data || []
+    // This method is kept for backward compatibility
+    // Consolidated grades are now loaded via dashboard API
+    return []
   }
 
   // Get student statistics (optimized with single query when possible)
   static async getStudentStats() {
-    // Try to use database views/functions for better performance
-    const { data: statsData, error: statsError } = await supabase
-      .from('dashboard_stats')
-      .select('*')
-      .single()
-
-    if (!statsError && statsData) {
-      return {
-        totalStudents: statsData.total_students,
-        totalAssignments: statsData.total_assignments,
-        totalGrades: statsData.total_grades,
-        avgScore: statsData.avg_score,
-        completionRate: statsData.completion_rate
-      }
-    }
-
-    // Fallback to original approach if dashboard_stats view doesn't exist
-    logger.warn('Dashboard stats view not available, falling back to multiple queries')
-    const [students, assignments, grades] = await Promise.all([
-      this.getStudents(),
-      this.getAssignments(),
-      this.getGrades()
-    ])
-
-    const totalStudents = students.length
-    const totalAssignments = assignments.length
-    const totalGrades = grades.length
-
-    // Calculate average score
-    const validGrades = grades.filter(g => g.points_awarded !== null)
-    const avgScore = validGrades.length > 0
-      ? Math.round(validGrades.reduce((sum, g) => sum + (g.points_awarded || 0), 0) / validGrades.length)
-      : 0
-
-    // Calculate completion rate
-    const completionRate = totalStudents > 0
-      ? Math.round((validGrades.length / (totalStudents * totalAssignments)) * 100)
-      : 0
-
+    // This method is kept for backward compatibility
+    // Stats are now loaded via dashboard API
     return {
-      totalStudents,
-      totalAssignments,
-      totalGrades,
-      avgScore,
-      completionRate
+      totalStudents: 0,
+      totalAssignments: 0,
+      totalGrades: 0,
+      avgScore: 0,
+      completionRate: 0
     }
   }
 
@@ -194,177 +131,25 @@ export class SupabaseService {
     ranking_position?: number
     has_fork?: boolean
   }>> {
-    // Get all students first to ensure we include everyone
-    const { data: allStudents, error: studentsError } = await supabase
-      .from('students')
-      .select('github_username')
-
-    // Try to get from admin_leaderboard first (time-based ranking)
-    const { data: adminData, error: adminError } = await supabase
-      .from('admin_leaderboard')
-      .select('*')
-      .limit(1000)
-      .order('ranking_position')
-    
-    if (!adminError && adminData && adminData.length > 0) {
-      // Create a map of students from admin_leaderboard
-      const leaderboardMap = new Map(
-        adminData.map(student => [student.github_username, {
-          github_username: student.github_username,
-          total_score: student.total_score,
-          total_possible: student.total_possible,
-          percentage: student.percentage,
-          assignments_completed: student.assignments_completed,
-          fork_created_at: student.fork_created_at,
-          last_updated_at: student.last_updated_at,
-          resolution_time_hours: student.resolution_time_hours,
-          ranking_position: student.ranking_position,
-          has_fork: student.has_fork
-        }])
-      )
-
-      // Add any students who are not in the leaderboard but exist in students table
-      if (!studentsError && allStudents) {
-        allStudents.forEach(student => {
-          if (!leaderboardMap.has(student.github_username)) {
-            leaderboardMap.set(student.github_username, {
-              github_username: student.github_username,
-              total_score: 0,
-              total_possible: 0,
-              percentage: 0,
-              assignments_completed: 0,
-              fork_created_at: undefined,
-              last_updated_at: undefined,
-              resolution_time_hours: undefined,
-              ranking_position: undefined,
-              has_fork: false
-            })
-          }
-        })
-      }
-
-      return Array.from(leaderboardMap.values())
-    }
-    
-    // Fallback to consolidated_grades if admin_leaderboard is not available
-    logger.warn('Admin leaderboard not available, falling back to consolidated_grades')
-    const { data: gradesData, error: gradesError } = await supabase
-      .from('consolidated_grades')
-      .select('*')
-
-    if (gradesError) {
-      throw new Error(`Failed to fetch consolidated grades: ${gradesError.message}`)
-    }
-
-    if (!gradesData || gradesData.length === 0) {
-      return []
-    }
-
-    // Get fork data from grades table to determine accepted assignments
-    const { data: gradesWithFork, error: forkError } = await supabase
-      .from('grades')
-      .select('github_username, assignment_name, fork_created_at')
-
-    if (forkError) {
-      throw new Error(`Failed to fetch fork data: ${forkError.message}`)
-    }
-
-    // Create a set of accepted assignments per student (those with fork_created_at)
-    const acceptedAssignments = new Map<string, Set<string>>()
-    gradesWithFork?.forEach(grade => {
-      if (grade.fork_created_at) {
-        if (!acceptedAssignments.has(grade.github_username)) {
-          acceptedAssignments.set(grade.github_username, new Set())
-        }
-        acceptedAssignments.get(grade.github_username)!.add(grade.assignment_name)
-      }
-    })
-
-    // Group by student and calculate totals
-    const studentMap = new Map<string, {
-      github_username: string
-      total_score: number
-      total_possible: number
-      assignments_completed: number
-      grades: ConsolidatedGrade[]
-    }>()
-
-    gradesData.forEach(grade => {
-      const username = grade.github_username
-      if (!studentMap.has(username)) {
-        studentMap.set(username, {
-          github_username: username,
-          total_score: 0,
-          total_possible: 0,
-          assignments_completed: 0,
-          grades: []
-        })
-      }
-
-      const student = studentMap.get(username)!
-      student.total_score += grade.points_awarded || 0
-      student.total_possible += grade.points_available || 0
-      student.grades.push(grade)
-    })
-
-    // Convert to array and calculate percentages
-    const leaderboard = Array.from(studentMap.values()).map(student => ({
-      github_username: student.github_username,
-      total_score: student.total_score,
-      total_possible: student.total_possible,
-      percentage: student.total_possible > 0
-        ? Math.round((student.total_score / student.total_possible) * 100)
-        : 0,
-      assignments_completed: acceptedAssignments.get(student.github_username)?.size || 0
-    }))
-
-    // Add any students who are not in the leaderboard but exist in students table
-    if (!studentsError && allStudents) {
-      const existingUsernames = new Set(leaderboard.map(s => s.github_username))
-      allStudents.forEach(student => {
-        if (!existingUsernames.has(student.github_username)) {
-          leaderboard.push({
-            github_username: student.github_username,
-            total_score: 0,
-            total_possible: 0,
-            percentage: 0,
-            assignments_completed: 0
-          })
-        }
-      })
-    }
-    
-    // Sort by percentage descending (fallback behavior)
-    return leaderboard.sort((a, b) => b.percentage - a.percentage)
+    // This method is kept for backward compatibility
+    // Leaderboard is now loaded via dashboard API
+    return []
   }
 
   // Search students by username
   static async searchStudents(query: string): Promise<Student[]> {
-    const { data, error } = await supabase
-      .from('students')
-      .select('*')
-      .ilike('github_username', `%${query}%`)
-      .order('github_username')
-    
-    if (error) {
-      throw new Error(`Failed to search students: ${error.message}`)
-    }
-    
-    return data || []
+    // This method is kept for backward compatibility
+    // Students are now loaded via dashboard API and filtered client-side
+    return []
   }
 
   // Get grades for specific assignment
   static async getGradesByAssignment(assignmentName: string): Promise<Grade[]> {
-    const { data, error } = await supabase
-      .from('grades')
-      .select('*')
-      .eq('assignment_name', assignmentName)
-      .order('github_username')
-    
-    if (error) {
-      throw new Error(`Failed to fetch grades for assignment: ${error.message}`)
+    const response = await fetch(`/api/grades?assignment=${encodeURIComponent(assignmentName)}`)
+    if (!response.ok) {
+      throw new Error(`Failed to fetch grades for assignment: ${response.statusText}`)
     }
-    
+    const data = await response.json()
     return data || []
   }
 
@@ -377,148 +162,67 @@ export class SupabaseService {
     fork_created_at?: string | null
     fork_updated_at?: string | null
   }>> {
-    const { data: grades, error: gradesError } = await supabase
-      .from('grades')
-      .select('assignment_name, points_awarded, fork_created_at, fork_updated_at')
-      .eq('github_username', username)
-      .order('assignment_name')
-
-    if (gradesError) {
-      throw new Error(`Failed to fetch grades for student: ${gradesError.message}`)
+    const response = await fetch(`/api/students/${encodeURIComponent(username)}/grades`)
+    if (!response.ok) {
+      throw new Error(`Failed to fetch student grades: ${response.statusText}`)
     }
-
-    const { data: assignments, error: assignmentsError } = await supabase
-      .from('assignments')
-      .select('name, points_available')
-      .order('name')
-
-    if (assignmentsError) {
-      throw new Error(`Failed to fetch assignments: ${assignmentsError.message}`)
-    }
-
-    // Create assignment lookup
-    const assignmentMap = new Map<string, number>()
-    assignments.forEach(assignment => {
-      assignmentMap.set(assignment.name, assignment.points_available || 0)
-    })
-
-    // KISS: For assignments with no points_available, use points_awarded as reference
-    // Get all grades for all students to find max points
-    const { data: allGrades } = await supabase
-      .from('grades')
-      .select('assignment_name, points_awarded')
-
-    if (allGrades) {
-      // For each assignment, if points_available is 0, use max points_awarded
-      assignments.forEach(assignment => {
-        if (!assignment.points_available || assignment.points_available === 0) {
-          const assignmentGrades = allGrades.filter(g => g.assignment_name === assignment.name)
-          const maxPoints = Math.max(...assignmentGrades.map(g => g.points_awarded || 0), 0)
-          if (maxPoints > 0) {
-            assignmentMap.set(assignment.name, maxPoints)
-          }
-        }
-      })
-    }
-
-    // Create grades lookup with fork dates
-    const gradesMap = new Map<string, { points: number, fork_created_at: string | null, fork_updated_at: string | null }>()
-    grades.forEach(grade => {
-      gradesMap.set(grade.assignment_name, {
-        points: grade.points_awarded || 0,
-        fork_created_at: grade.fork_created_at || null,
-        fork_updated_at: grade.fork_updated_at || null
-      })
-    })
-
-    // Create breakdown for all assignments
-    const breakdown = assignments.map(assignment => {
-      const gradeData = gradesMap.get(assignment.name)
-      const pointsAwarded = gradeData?.points || 0
-      const pointsAvailable = assignmentMap.get(assignment.name) || 0
-      const percentage = pointsAvailable > 0 ? Math.round((pointsAwarded / pointsAvailable) * 100) : 0
-
-      return {
-        assignment_name: assignment.name,
-        points_awarded: pointsAwarded,
-        points_available: pointsAvailable,
-        percentage: percentage,
-        fork_created_at: gradeData?.fork_created_at || null,
-        fork_updated_at: gradeData?.fork_updated_at || null
-      }
-    })
-
-    return breakdown
+    const data = await response.json()
+    return data || []
   }
 
   // Review System Methods
 
   // Get all student reviewers
   static async getStudentReviewers(): Promise<StudentReviewer[]> {
-    const { data, error } = await supabase
-      .from('student_reviewers')
-      .select('*')
-      .order('created_at', { ascending: false })
-
-    if (error) {
-      throw new Error(`Failed to fetch student reviewers: ${error.message}`)
+    const response = await fetch('/api/reviewers')
+    if (!response.ok) {
+      throw new Error(`Failed to fetch student reviewers: ${response.statusText}`)
     }
-
-    return data || []
+    const data = await response.json()
+    // Convert object to array if needed
+    if (Array.isArray(data)) {
+      return data
+    }
+    // If it's grouped by student, flatten it
+    return Object.values(data).flat() as StudentReviewer[]
   }
 
   // Get all student reviewers grouped by student (optimized for batch loading)
   static async getAllStudentReviewersGrouped(): Promise<Map<string, StudentReviewer[]>> {
-    const { data, error } = await supabase
-      .from('student_reviewers')
-      .select('*')
-      .order('student_username')
-      .order('created_at', { ascending: false })
-
-    if (error) {
-      throw new Error(`Failed to fetch student reviewers: ${error.message}`)
+    const response = await fetch('/api/reviewers')
+    if (!response.ok) {
+      throw new Error(`Failed to fetch student reviewers: ${response.statusText}`)
     }
-
-    // Group by student username
+    const data = await response.json()
+    
+    // Convert object to Map
     const reviewerMap = new Map<string, StudentReviewer[]>()
-    data?.forEach(reviewer => {
-      const username = reviewer.student_username
-      if (!reviewerMap.has(username)) {
-        reviewerMap.set(username, [])
-      }
-      reviewerMap.get(username)!.push(reviewer)
-    })
-
+    if (typeof data === 'object' && !Array.isArray(data)) {
+      Object.entries(data).forEach(([username, reviewers]) => {
+        reviewerMap.set(username, reviewers as StudentReviewer[])
+      })
+    }
+    
     return reviewerMap
   }
 
   // Get reviewers for a specific student
   static async getStudentReviewersByStudent(studentUsername: string): Promise<StudentReviewer[]> {
-    const { data, error } = await supabase
-      .from('student_reviewers')
-      .select('*')
-      .eq('student_username', studentUsername)
-      .order('created_at', { ascending: false })
-    
-    if (error) {
-      throw new Error(`Failed to fetch reviewers for student: ${error.message}`)
+    const response = await fetch(`/api/reviewers?student=${encodeURIComponent(studentUsername)}`)
+    if (!response.ok) {
+      throw new Error(`Failed to fetch reviewers for student: ${response.statusText}`)
     }
-    
+    const data = await response.json()
     return data || []
   }
 
   // Get assignments assigned to a reviewer
   static async getReviewerAssignments(reviewerUsername: string): Promise<StudentReviewer[]> {
-    const { data, error } = await supabase
-      .from('student_reviewers')
-      .select('*')
-      .eq('reviewer_username', reviewerUsername)
-      .order('created_at', { ascending: false })
-    
-    if (error) {
-      throw new Error(`Failed to fetch reviewer assignments: ${error.message}`)
+    const response = await fetch(`/api/reviewers?reviewer=${encodeURIComponent(reviewerUsername)}`)
+    if (!response.ok) {
+      throw new Error(`Failed to fetch reviewer assignments: ${response.statusText}`)
     }
-    
+    const data = await response.json()
     return data || []
   }
 
@@ -529,18 +233,21 @@ export class SupabaseService {
     assignmentName: string
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      const { error } = await supabase
-        .from('student_reviewers')
-        .insert({
-          student_username: studentUsername,
-          reviewer_username: reviewerUsername,
-          assignment_name: assignmentName,
-          status: 'pending',
-          assigned_at: new Date().toISOString()
+      const response = await fetch('/api/reviewers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          studentUsername,
+          reviewerUsername,
+          assignmentName
         })
+      })
 
-      if (error) {
-        throw new Error(`Failed to assign reviewer: ${error.message}`)
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to assign reviewer')
       }
 
       return { success: true }
@@ -558,18 +265,17 @@ export class SupabaseService {
     status: 'pending' | 'in_progress' | 'completed'
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      const updateData: { status: string; completed_at?: string } = { status }
-      if (status === 'completed') {
-        updateData.completed_at = new Date().toISOString()
-      }
+      const response = await fetch('/api/reviewers', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id, status })
+      })
 
-      const { error } = await supabase
-        .from('student_reviewers')
-        .update(updateData)
-        .eq('id', id)
-
-      if (error) {
-        throw new Error(`Failed to update reviewer status: ${error.message}`)
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update reviewer status')
       }
 
       return { success: true }
@@ -591,16 +297,17 @@ export class SupabaseService {
         throw new Error('Code quality score must be between 1 and 10')
       }
 
-      const { error } = await supabase
-        .from('student_reviewers')
-        .update({ 
-          code_quality_score: score,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id)
+      const response = await fetch('/api/reviewers', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id, code_quality_score: score })
+      })
 
-      if (error) {
-        throw new Error(`Failed to update code quality score: ${error.message}`)
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update code quality score')
       }
 
       return { success: true }
@@ -617,22 +324,17 @@ export class SupabaseService {
     studentUsername: string,
     assignmentName?: string
   ): Promise<ReviewComment[]> {
-    let query = supabase
-      .from('review_comments')
-      .select('*')
-      .eq('student_username', studentUsername)
-      .order('created_at', { ascending: false })
-
+    let url = `/api/comments?student=${encodeURIComponent(studentUsername)}`
     if (assignmentName) {
-      query = query.eq('assignment_name', assignmentName)
+      url += `&assignment=${encodeURIComponent(assignmentName)}`
     }
 
-    const { data, error } = await query
-
-    if (error) {
-      throw new Error(`Failed to fetch review comments: ${error.message}`)
+    const response = await fetch(url)
+    if (!response.ok) {
+      throw new Error(`Failed to fetch review comments: ${response.statusText}`)
     }
     
+    const data = await response.json()
     return data || []
   }
 
@@ -646,19 +348,24 @@ export class SupabaseService {
     priority: 'low' | 'medium' | 'high'
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      const { error } = await supabase
-        .from('review_comments')
-        .insert({
-          student_username: studentUsername,
-          reviewer_username: reviewerUsername,
-          assignment_name: assignmentName,
+      const response = await fetch('/api/comments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          studentUsername,
+          reviewerUsername,
+          assignmentName,
           comment,
-          comment_type: commentType,
+          commentType,
           priority
         })
+      })
 
-      if (error) {
-        throw new Error(`Failed to add review comment: ${error.message}`)
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to add review comment')
       }
 
       return { success: true }
@@ -676,17 +383,11 @@ export class SupabaseService {
     full_name?: string
     email?: string
   }>> {
-    const { data, error } = await supabase
-      .from('authorized_users')
-      .select('github_username, full_name, email')
-      .eq('role', 'admin')
-      .eq('status', 'active')
-      .order('github_username')
-
-    if (error) {
-      throw new Error(`Failed to fetch available reviewers: ${error.message}`)
+    const response = await fetch('/api/reviewers?available=true')
+    if (!response.ok) {
+      throw new Error(`Failed to fetch available reviewers: ${response.statusText}`)
     }
-
+    const data = await response.json()
     return data || []
   }
 
@@ -714,18 +415,32 @@ export class SupabaseService {
     }
     reviewersGrouped: Map<string, StudentReviewer[]>
   }> {
-    // Execute all queries in parallel
-    const [leaderboard, assignments, stats, reviewersGrouped] = await Promise.all([
-      this.getLeaderboard(),
-      this.getAssignments(),
-      this.getStudentStats(),
-      this.getAllStudentReviewersGrouped()
-    ])
+    // Fetch all dashboard data from API route
+    const response = await fetch('/api/dashboard')
+    if (!response.ok) {
+      throw new Error(`Failed to fetch dashboard data: ${response.statusText}`)
+    }
+    
+    const data = await response.json()
+    
+    // Convert reviewersGrouped object back to Map
+    const reviewersGrouped = new Map<string, StudentReviewer[]>()
+    if (data.reviewersGrouped && typeof data.reviewersGrouped === 'object') {
+      Object.entries(data.reviewersGrouped).forEach(([username, reviewers]) => {
+        reviewersGrouped.set(username, reviewers as StudentReviewer[])
+      })
+    }
 
     return {
-      leaderboard,
-      assignments,
-      stats,
+      leaderboard: data.leaderboard || [],
+      assignments: data.assignments || [],
+      stats: data.stats || {
+        totalStudents: 0,
+        totalAssignments: 0,
+        totalGrades: 0,
+        avgScore: 0,
+        completionRate: 0
+      },
       reviewersGrouped
     }
   }
