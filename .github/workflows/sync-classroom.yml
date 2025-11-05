@@ -18,91 +18,27 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
-    
+
     - name: Install GitHub CLI
       run: |
-        curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
-        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
         sudo apt update
-        sudo apt install gh
-    
+        sudo apt install gh -y
+
     - name: Authenticate GitHub CLI
-      run: |
-        echo "${{ secrets.GH_CLASSROOM_TOKEN }}" | gh auth login --with-token
-
-    - name: Verify GitHub CLI authentication
-      run: |
-        gh auth status
-
-    - name: Install GitHub CLI Classroom Extension
       env:
         GH_TOKEN: ${{ secrets.GH_CLASSROOM_TOKEN }}
       run: |
-        gh extension install github/gh-classroom
-        gh extension list
-    
-    - name: Set up environment
-      run: |
-        cd b4os-backend
-        # Create logs directory
-        mkdir -p ../logs
-        # Copy environment template if .env.local doesn't exist
-        if [ ! -f .env.local ]; then
-          cp env.example .env.local
-          echo "Created .env.local from template"
-        fi
-    
-    - name: Install Python dependencies
-      run: |
-        cd b4os-backend
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-    
-    - name: Test network connectivity
-      run: |
-        echo "Testing network connectivity..."
-        ping -c 3 8.8.8.8 || echo "Ping test failed"
-        nslookup google.com || echo "DNS test failed"
-        curl -I https://google.com || echo "HTTPS test failed"
-    
-    - name: Validate Supabase connection
-      env:
-        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-        SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-      run: |
-        echo "Testing Supabase URL format..."
-        echo "SUPABASE_URL starts with: ${SUPABASE_URL:0:20}..."
-        echo "SUPABASE_KEY starts with: ${SUPABASE_KEY:0:20}..."
-        
-        # Check if secrets are example values
-        if [[ $SUPABASE_URL == *"your-project"* ]] || [[ $SUPABASE_URL == *"example"* ]]; then
-          echo "ERROR: SUPABASE_URL appears to be an example value. Please update the secret with your actual Supabase URL."
-          exit 1
-        fi
-        
-        if [[ $SUPABASE_KEY == *"your-anon-key"* ]] || [[ $SUPABASE_KEY == *"example"* ]]; then
-          echo "ERROR: SUPABASE_KEY appears to be an example value. Please update the secret with your actual Supabase key."
-          exit 1
-        fi
-        
-        # Test if URL is reachable
-        if [[ $SUPABASE_URL == https://* ]]; then
-          echo "Testing Supabase URL connectivity..."
-          curl -I "$SUPABASE_URL" || echo "Supabase URL not reachable"
-        else
-          echo "ERROR: SUPABASE_URL should start with https://"
-          exit 1
-        fi
-    
+        echo "$GH_TOKEN" | gh auth login --with-token
+
     - name: Run sync script
       env:
         SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -110,11 +46,12 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GH_CLASSROOM_TOKEN }}
         CLASSROOM_NAME: ${{ inputs.classroom_name || 'B4OS-Dev-2025' }}
         ASSIGNMENT_ID: ${{ inputs.assignment_id || '' }}
-        LOG_LEVEL: DEBUG
+        LOG_LEVEL: INFO
+        CI: true
       run: |
         cd b4os-backend
-        python sync-classroom.py
-    
+        python3 sync-classroom.py
+
     - name: Upload logs on failure
       if: failure()
       uses: actions/upload-artifact@v4

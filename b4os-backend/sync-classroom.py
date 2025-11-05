@@ -18,13 +18,16 @@ import subprocess
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Load environment variables from .env.local
-env_path = Path(__file__).parent / '.env.local'
-if env_path.exists():
-    load_dotenv(env_path)
-    print(f"✅ Loaded environment variables from {env_path}")
+# Load environment variables from .env.local (skip in CI)
+if not os.getenv('CI'):
+    env_path = Path(__file__).parent / '.env.local'
+    if env_path.exists():
+        load_dotenv(env_path)
+        print(f"✅ Loaded environment variables from {env_path}")
+    else:
+        print(f"⚠️  Environment file not found: {env_path}")
 else:
-    print(f"⚠️  Environment file not found: {env_path}")
+    print("✅ Running in CI mode - using environment variables from GitHub Secrets")
 
 # Add the current directory to Python path
 sys.path.append(str(Path(__file__).parent))
