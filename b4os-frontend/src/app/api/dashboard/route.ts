@@ -373,7 +373,7 @@ async function getAllStudentReviewersGrouped() {
     })
 
     return reviewerMap
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error in getAllStudentReviewersGrouped:', error)
     // Return empty map instead of throwing to prevent dashboard from failing
     return new Map()
