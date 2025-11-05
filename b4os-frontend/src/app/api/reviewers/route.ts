@@ -2,11 +2,19 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { createClient } from '@supabase/supabase-js'
+import type { StudentReviewer } from '@/lib/supabase'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+interface ReviewerUpdateData {
+  status?: string
+  completed_at?: string
+  code_quality_score?: number
+  updated_at: string
+}
 
 // GET - Get reviewers for a student or all reviewers
 export async function GET(request: NextRequest) {
@@ -65,7 +73,7 @@ export async function GET(request: NextRequest) {
 
     if (error) throw error
 
-    const reviewerMap: Record<string, any[]> = {}
+    const reviewerMap: Record<string, StudentReviewer[]> = {}
     data?.forEach(reviewer => {
       const username = reviewer.student_username
       if (!reviewerMap[username]) {
@@ -117,10 +125,11 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error assigning reviewer:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Failed to assign reviewer'
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to assign reviewer' },
+      { success: false, error: errorMessage },
       { status: 500 }
     )
   }
@@ -144,7 +153,9 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    const updateData: any = {}
+    const updateData: ReviewerUpdateData = {
+      updated_at: new Date().toISOString()
+    }
     if (status) {
       updateData.status = status
       if (status === 'completed') {
@@ -160,7 +171,6 @@ export async function PATCH(request: NextRequest) {
       }
       updateData.code_quality_score = code_quality_score
     }
-    updateData.updated_at = new Date().toISOString()
 
     const { error } = await supabase
       .from('student_reviewers')
@@ -172,10 +182,11 @@ export async function PATCH(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error updating reviewer:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Failed to update reviewer'
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to update reviewer' },
+      { success: false, error: errorMessage },
       { status: 500 }
     )
   }
@@ -209,10 +220,11 @@ export async function DELETE(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error removing reviewer:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Failed to remove reviewer'
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to remove reviewer' },
+      { success: false, error: errorMessage },
       { status: 500 }
     )
   }

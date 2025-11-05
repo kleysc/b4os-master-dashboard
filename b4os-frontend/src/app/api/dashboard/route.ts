@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { createClient } from '@supabase/supabase-js'
@@ -9,7 +9,17 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.
 // Use service role key for server-side operations (bypasses RLS)
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-export async function GET(request: NextRequest) {
+interface LeaderboardEntry {
+  github_username: string
+  total_score: number
+  total_possible: number
+  percentage: number
+  assignments_completed: number
+  resolution_time_hours?: number | null
+  has_fork?: boolean
+}
+
+export async function GET() {
   try {
     // Verify authentication
     const session = await getServerSession(authOptions)
@@ -80,12 +90,13 @@ export async function GET(request: NextRequest) {
       },
       reviewersGrouped: reviewersData ? Object.fromEntries(reviewersData) : {}
     })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching dashboard data:', error)
+    const errorMessage = error instanceof Error ? error.message : String(error)
     return NextResponse.json(
       { 
         error: 'Failed to fetch dashboard data',
-        details: error?.message || String(error)
+        details: errorMessage
       },
       { status: 500 }
     )
@@ -222,9 +233,10 @@ async function getLeaderboard() {
     }
 
     return leaderboard.sort((a, b) => b.percentage - a.percentage)
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error in getLeaderboard:', error)
-    throw new Error(`Failed to get leaderboard: ${error?.message || String(error)}`)
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    throw new Error(`Failed to get leaderboard: ${errorMessage}`)
   }
 }
 
@@ -240,13 +252,14 @@ async function getAssignments() {
       throw error
     }
     return data || []
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error in getAssignments:', error)
-    throw new Error(`Failed to get assignments: ${error?.message || String(error)}`)
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    throw new Error(`Failed to get assignments: ${errorMessage}`)
   }
 }
 
-async function getStudentStats(leaderboard: any[] = []) {
+async function getStudentStats(leaderboard: LeaderboardEntry[] = []) {
   try {
     const { data: statsData, error: statsError } = await supabase
       .from('dashboard_stats')
@@ -288,7 +301,6 @@ async function getStudentStats(leaderboard: any[] = []) {
       : 0
 
     // Calculate completion rate: students with at least one grade / total students
-    const studentsWithGrades = grades.data ? new Set(grades.data.map(g => g.github_username)).size : 0
     const completionRate = totalStudents > 0 && totalAssignments > 0
       ? Math.round((validGrades.length / (totalStudents * totalAssignments)) * 100)
       : 0
@@ -300,9 +312,10 @@ async function getStudentStats(leaderboard: any[] = []) {
       avgScore,
       completionRate
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error in getStudentStats:', error)
-    throw new Error(`Failed to get student stats: ${error?.message || String(error)}`)
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    throw new Error(`Failed to get student stats: ${errorMessage}`)
   }
 }
 
@@ -330,7 +343,7 @@ async function getAnonymizedLeaderboard(currentUsername?: string) {
     
     // Return only the current user's data
     return [userData]
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error in getAnonymizedLeaderboard:', error)
     return []
   }

@@ -87,10 +87,11 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error adding comment:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Failed to add comment'
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to add comment' },
+      { success: false, error: errorMessage },
       { status: 500 }
     )
   }

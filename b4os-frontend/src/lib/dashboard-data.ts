@@ -1,11 +1,22 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { createClient } from '@supabase/supabase-js'
+import type { StudentReviewer } from './supabase'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+interface LeaderboardEntry {
+  github_username: string
+  total_score: number
+  total_possible: number
+  percentage: number
+  assignments_completed: number
+  resolution_time_hours?: number | null
+  has_fork?: boolean
+}
 
 export interface DashboardData {
   leaderboard: Array<{
@@ -31,7 +42,7 @@ export interface DashboardData {
     avgScore: number
     completionRate: number
   }
-  reviewersGrouped: Record<string, any[]>
+  reviewersGrouped: Record<string, StudentReviewer[]>
   allGrades: Array<{ github_username: string; assignment_name: string; points_awarded: number | null }>
 }
 
@@ -177,7 +188,7 @@ async function getLeaderboard() {
     }
 
     return leaderboard.sort((a, b) => b.percentage - a.percentage)
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error in getLeaderboard:', error)
     return []
   }
@@ -198,7 +209,7 @@ async function getAnonymizedLeaderboard(currentUsername?: string) {
     }
     
     return [userData]
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error in getAnonymizedLeaderboard:', error)
     return []
   }
@@ -213,13 +224,13 @@ async function getAssignments() {
 
     if (error) throw error
     return data || []
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error in getAssignments:', error)
     return []
   }
 }
 
-async function getStudentStats(leaderboard: any[]) {
+async function getStudentStats(leaderboard: LeaderboardEntry[]) {
   try {
     const { data: statsData, error: statsError } = await supabase
       .from('dashboard_stats')
@@ -258,7 +269,6 @@ async function getStudentStats(leaderboard: any[]) {
       ? Math.round(validGrades.reduce((sum, g) => sum + (g.points_awarded || 0), 0) / validGrades.length)
       : 0
 
-    const studentsWithGrades = grades.data ? new Set(grades.data.map(g => g.github_username)).size : 0
     const completionRate = totalStudents > 0 && totalAssignments > 0
       ? Math.round((validGrades.length / (totalStudents * totalAssignments)) * 100)
       : 0
@@ -270,7 +280,7 @@ async function getStudentStats(leaderboard: any[]) {
       avgScore,
       completionRate
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error in getStudentStats:', error)
     return {
       totalStudents: 0,
@@ -294,7 +304,7 @@ async function getAllStudentReviewersGrouped() {
       return {}
     }
 
-    const reviewerMap: Record<string, any[]> = {}
+    const reviewerMap: Record<string, StudentReviewer[]> = {}
     data?.forEach(reviewer => {
       const username = reviewer.student_username
       if (!reviewerMap[username]) {
@@ -304,7 +314,7 @@ async function getAllStudentReviewersGrouped() {
     })
 
     return reviewerMap
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error in getAllStudentReviewersGrouped:', error)
     return {}
   }
@@ -319,7 +329,7 @@ async function getGrades() {
 
     if (error) throw error
     return data || []
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching grades:', error)
     return []
   }
