@@ -13,7 +13,8 @@ declare module "next-auth" {
       role?: UserRole
       isAuthorized?: boolean
     }
-    accessToken?: string
+    // accessToken is intentionally NOT exposed to the client for security
+    // It remains only in the server-side JWT token
   }
 
   interface User {

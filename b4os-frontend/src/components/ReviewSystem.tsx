@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { SupabaseService, type StudentReviewer, type ReviewComment } from "@/lib/supabase";
-import { supabase } from "@/lib/supabase";
 import { useTranslation } from '@/hooks/useTranslation';
 import { 
   UserCheck, 
@@ -197,13 +196,13 @@ export default function ReviewSystem({
   const handleRemoveReviewer = async (reviewerId: number) => {
     if (confirm('¿Estás seguro de que quieres remover este revisor?')) {
       try {
-        const { error } = await supabase
-          .from('student_reviewers')
-          .delete()
-          .eq('id', reviewerId);
+        const response = await fetch(`/api/reviewers?id=${reviewerId}`, {
+          method: 'DELETE'
+        });
 
-        if (error) {
-          throw new Error(`Failed to remove reviewer: ${error.message}`);
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Failed to remove reviewer');
         }
 
         await loadData();

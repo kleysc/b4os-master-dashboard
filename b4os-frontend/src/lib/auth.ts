@@ -119,12 +119,14 @@ export const authOptions = {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async session({ session, token }: any) {
       // Send properties to the client
+      // NOTE: accessToken is NOT sent to client for security reasons
+      // It remains only in the server-side JWT token
       if (session.user) {
         session.user.githubId = token.githubId
         session.user.username = token.username
         session.user.role = token.role as UserRole
         session.user.isAuthorized = token.isAuthorized
-        session.accessToken = token.accessToken
+        // accessToken is intentionally NOT included here - it stays server-side only
       }
       return session
     },
